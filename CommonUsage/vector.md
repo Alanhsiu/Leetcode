@@ -29,7 +29,8 @@
 | **Iteration** | `for (int x : vec1) { /* use x */ }`                 | Range-based for loop (preferred).               |
 |                    | `for (auto it = vec1.begin(); it != vec1.end(); ++it) { /* use *it */ }` | Iterator-based. |
 | **Sort** | `std::sort(vec1.begin(), vec1.end());`                 | Sorts elements in ascending order.              |
-|                    | `std::sort(vec1.begin(), vec1.end(), std::greater<int>());` | Sorts in descending order (custom comparator). |
+|                    | `std::sort(vec1.begin(), vec1.end(), std::greater<int>());` | Sorts in descending order (custom comparator). | 
+|                    | `std::sort(vecOfVecs.begin(), vecOfVecs.end(), [](const auto& a, const auto& b){ return a[0] < b[0]; });` | Sorts a vector of vectors by the first element. |
 
 ---
 

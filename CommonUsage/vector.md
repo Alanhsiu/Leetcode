@@ -33,6 +33,7 @@
 | **Sort**                   | `std::sort(vec1.begin(), vec1.end());`                                                                    | Sorts elements in ascending order.                                  |
 |                            | `std::sort(vec1.begin(), vec1.end(), std::greater<int>());`                                               | Sorts in descending order (custom comparator).                      |
 |                            | `std::sort(vecOfVecs.begin(), vecOfVecs.end(), [](const auto& a, const auto& b){ return a[0] < b[0]; });` | Sorts a vector of vectors by the first element.                     |
+|                            | `bool compareVecs(const std::vector<int>& a,const std::vector<int>& b) {return a[0] < b[0]; }`<br/> `std::sort(vecOfVecs.begin(), vecOfVecs.end(), compareVecs);` | Sorts with a **custom comparator struct** (here, by second element descending).                     |
 
 ---
 

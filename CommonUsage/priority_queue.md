@@ -39,6 +39,36 @@ A **heap** is a specialized tree-based data structure that satisfies the heap pr
 
 ---
 
+### ⚙️ Custom Comparator Concept (The $\text{Comp}$ Parameter)
+
+The `Compare` parameter is the **third template argument** and is key for customizing priority, especially for non-primitive types or defining a Min-Heap. It must be a **Type** (a Functor).
+
+**Logic Rule:** The comparator `comp(A, B)` must return `true` if **A has lower priority** than B (i.e., A should come *after* B in the sorted order).
+
+**Min-Heap Application (Merge k Sorted Lists Example):**
+We use a Min-Heap of `ListNode*` pointers, prioritizing the node with the smallest `val`.
+
+* **Logic:** We set the comparator to return `true` if $A$'s value is **greater than** $B$'s value (`A->val > B->val`). If $A > B$, then $A$ has lower priority and sinks, causing the smallest element to rise to the top.
+
+#### **Custom Comparator Syntax Options**
+
+1.  **Functor (`struct`):** The classic, explicit C++ way.
+    ```cpp
+    struct CompareNode {
+        bool operator()(ListNode* a, ListNode* b) {
+            return a->val > b->val; // Returns true if a has lower priority (is larger)
+        }
+    };
+    std::priority_queue<ListNode*, std::vector<ListNode*>, CompareNode> minHeap;
+    ```
+2.  **Lambda (`decltype`):** The modern C++ way.
+    ```cpp
+    auto comp = [](ListNode* a, ListNode* b) { return a->val > b->val; };
+    std::priority_queue<ListNode*, std::vector<ListNode*>, decltype(comp)> minHeap(comp);
+    ```
+
+---
+
 ### 💡 **Key Use Cases**
 
 * **Finding K Largest/Smallest Elements:** Efficiently maintain the K largest/smallest elements seen so far.

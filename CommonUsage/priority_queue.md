@@ -15,11 +15,12 @@
 | **Include** | `#include <queue>`<br>`#include <vector>`<br>`#include <functional>` | `<queue>` for `priority_queue`. `<vector>` is default underlying container. `<functional>` for `std::greater` / `std::less`. |
 | **Declaration (Max-Heap - Default)** | `std::priority_queue<int> max_heap;`                 | Stores largest element at top (default behavior). |
 | **Declaration (Min-Heap)** | `std::priority_queue<int, std::vector<int>, std::greater<int>> min_heap;` | Stores smallest element at top. Requires `std::vector` as underlying container and `std::greater` as comparator. |
-| **Add Element** | `max_heap.push(10);`<br>`min_heap.push(5);`          | Inserts element, maintaining heap property.     |
-| **Get Top Element**| `int top_val = max_heap.top();`                     | Accesses the highest (or lowest) priority element **without removing it**. |
-| **Remove Top Element**| `max_heap.pop();`                                   | Removes the highest (or lowest) priority element. |
-| **Size** | `max_heap.size();`                                   | Number of elements in the queue.                |
-| **Is Empty?** | `max_heap.empty();`                                  | Returns `true` if no elements.                  |
+| **Heapify (Initialization)** | `priority_queue<int> pq(vec.begin(), vec.end());` | **Optimal $O(N)$ initialization** from an existing container. |
+| **Add Element** | `max_heap.push(10);`<br>`min_heap.push(5);`          | Inserts element, maintaining heap property. O(log N)     |
+| **Get Top Element**| `int top_val = max_heap.top();`                     | Accesses the highest (or lowest) priority element **without removing it**. O(1) |
+| **Remove Top Element**| `max_heap.pop();`                                   | Removes the highest (or lowest) priority element. O(log N) |
+| **Size** | `max_heap.size();`                                   | Number of elements in the queue. O(1) |
+| **Is Empty?** | `max_heap.empty();`                                  | Returns `true` if no elements. O(1) |
 
 ---
 
@@ -66,6 +67,22 @@ We use a Min-Heap of `ListNode*` pointers, prioritizing the node with the smalle
     auto comp = [](ListNode* a, ListNode* b) { return a->val > b->val; };
     std::priority_queue<ListNode*, std::vector<ListNode*>, decltype(comp)> minHeap(comp);
     ```
+
+---
+
+### ⚡ **Optimization: $O(N)$ Heapify vs. $O(N \log N)$ Push**
+
+When you have a set of data ready, how you initialize the heap matters significantly for performance.
+
+* **The Inefficient Way ($O(N \log N)$):**
+    Creating an empty heap and calling `push()` for each element. This is "Top-down" building.
+* **The Optimal Way ($O(N)$):**
+    Passing iterators to the constructor: `priority_queue<int> pq(nums.begin(), nums.end());`.
+
+
+
+**Why is it $O(N)$?**
+It uses **Bottom-up Heapify**. Most nodes (the leaves) don't move at all. The nodes that do move (near the root) are few in number. Mathematically, the sum of heights in a tree is linear, whereas the sum of depths (used in repeated `push`) is logarithmic per element.
 
 ---
 

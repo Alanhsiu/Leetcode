@@ -4,7 +4,7 @@
 * **Encapsulation**: Bundling data with methods. We use `private` to hide internal state and `public` getters/setters to access it safely.
 * **Abstraction**: Hiding complex implementation details. We use Abstract Classes to define *what* a system does, without showing *how* it does it.
 * **Inheritance**: Creating a new class from an existing one. It establishes an "is-a" relationship to reuse code.
-* **Polymorphism**: Treating different objects as the same base type. We use `virtual` functions and `override` to swap behavior at runtime.
+* **Polymorphism**: Treating different objects as the same base type. We use `virtual` functions and `override` to swap behavior at runtime. (Virtual Function allows us to override methods in subclasses.)
 
 ## 2. C vs. C++ (The Differences)
 * **Memory Allocation**: C uses `malloc` and `free`, which are manual and don't initialize data. C++ uses `new` and `delete`, which are type-safe and call constructors.

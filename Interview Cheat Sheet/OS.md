@@ -5,6 +5,8 @@
 * **Kernel**: The "brain" of the OS that has full control over the system.
 * **Device Driver**: Special code that acts as a translator, letting the OS talk to specific hardware (like a GPU or Mouse).
 * **System Call**: A way for a user program to ask the OS for help (e.g., "Read this file").
+* **What happens during a System Call? User mode -> Kernel mode switch**
+  Put arguments in registers -> Trigger trap/interrupt (e.g., int 0x80 or syscall) -> CPU switches to Kernel Mode (Ring 0) -> Kernel executes the handler -> Return to User Mode (Ring 3).
 
 ## 2. Processes, Threads & Scheduling
 * **Process vs. Thread**: A Process is a running program (isolated, safe, heavy). A Thread is a mini-unit inside a process (shares memory, fast, requires sync).
@@ -24,7 +26,7 @@
 * **Race Condition**: A bug where two threads change shared data at the same time, causing errors.
 * **Critical Section**: The specific code block that touches shared data. Only one thread should enter at a time.
 * **Mutex vs. Semaphore**: A **Mutex** is a lock (only 1 owner). A **Semaphore** is a counter (allows N users at once).
-* **Spinlock**: A lock where the waiting thread keeps looping ("Are you ready?"). Good for very short waits to avoid sleep overhead.
+* **Spinlock**: A lock where the waiting thread keeps looping ("Are you ready?"). Good for very short waits to avoid sleep overhead (context switch).
 
 ## 5. Deadlock (The "Stuck" Problem)
 * **Definition**: A situation where Process A waits for B, and B waits for A. No one can proceed.

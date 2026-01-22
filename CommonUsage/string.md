@@ -14,7 +14,7 @@ This section focuses on the functions most frequently required to solve problems
 
 | Operation            | Code Example                                | Notes                                                                                                                                                  |
 | :------------------- | :------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Substring**        | `s.substr(pos, len);` <br> `s.substr(pos);` | Two overloads: `substr(pos, len)` extracts `len` chars from `pos`, `substr(pos)` extracts from `pos` to end. **Returns a new string (incurs a copy).** |
+| **Substring**        | `s.substr(pos, len);` <br> `s.substr(pos);` | Two overloads: `substr(pos, len)` extracts `len` chars from `pos`, `substr(pos)` extracts from `pos` to end. **Returns a new string (incurs a copy).** e.g., `s.substr(i, j-i+1)` gets substring from index `i` to `j`. |
 | **Find Substring**   | `s.find("world");` <br> `s.rfind('o');`     | `find` searches from the start, `rfind` from the end. Returns the starting index or `std::string::npos` if not found.                                  |
 | **Replace**          | `s.replace(pos, len, "C++");`               | Replaces the section of `len` characters at `pos` with a new string.                                                                                   |
 | **Insert**           | `s.insert(pos, "awesome ");`                | Inserts a string at the specified index `pos`.                                                                                                         |

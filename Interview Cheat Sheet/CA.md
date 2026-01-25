@@ -41,7 +41,7 @@
 
 ## 7. The Memory Access Story
 1.  **Virtual Address**: The CPU asks for data using a fake address.
-2.  **TLB Check**: Fast hardware cache for addresses. **Hit** = Fast Physical Address.
+2.  **TLB Check**: Fast hardware cache for addresses. **Hit** = Fast Physical Address. TLB (Translation Lookaside Buffer).
 3.  **Page Table (PTE)**: If TLB Miss, check the slow map in RAM.
 4.  **Cache Check**: Use Physical Address to check L1/L2/L3.
 5.  **DRAM Access**: If Cache Miss, fetch data from Main Memory.

@@ -15,6 +15,8 @@
 | Operation | Code Example | Time Complexity | Notes |
 | :--- | :--- | :--- | :--- |
 | **Include** | `#include <deque>` | | |
+| **Declaration** | `std::deque<int> dq;` | | |
+| **Size/Empty** | `dq.size();`<br/>`dq.empty();` | **O(1)** | |
 | **Random Access** | `int val = dq[2];` | **O(1)** | Fast, but slightly slower constant factor than `std::vector`. |
 | **Front Insertion** | `dq.push_front(42);` | **O(1)** | Key advantage. |
 | **Back Insertion** | `dq.push_back(100);` | **O(1)** | |

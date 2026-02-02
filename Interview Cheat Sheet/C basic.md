@@ -28,3 +28,18 @@
 * **Stack vs. Heap**: The Stack is for local variables and is managed automatically. The Heap is for dynamic memory and must be managed manually.
 * **Memory Leak**: When we allocate memory on the Heap but forget to free it, causing the program to run out of RAM.
 * **Padding**: The compiler adds empty bytes to structs to align data. This helps the CPU read memory faster.
+
+# Why is C++ faster than Python?
+
+### 1. Compilation vs. Interpretation
+* **C++:** It is a **compiled** language. The code is translated directly into **Machine Code** that runs natively on the CPU.
+* **Python:** It is an **interpreted** language. The code runs through a **Virtual Machine**, which adds a translation layer and slows it down.
+
+### 2. Static vs. Dynamic Typing
+* **C++:** Uses **Static Typing**. The compiler knows the data types (like `int`, `float`) beforehand, so the instructions are optimized.
+* **Python:** Uses **Dynamic Typing**. The interpreter must check data types at **Runtime** (while the program is running). This constant checking creates significant **overhead**.
+
+### 3. Memory Management & Garbage Collection
+* **C++:** Allows **manual memory management**. Developers have full control over allocation, leading to high efficiency.
+* **Python:** Uses automatic **Garbage Collection (GC)**. The GC runs in the background to clean up unused memory, which consumes extra CPU resources and causes pauses.
+* **Object Overhead:** In Python, everything is an **Object** (even a simple integer), requiring more memory and processing power than C++'s primitive types.

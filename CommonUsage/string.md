@@ -92,3 +92,59 @@ These code snippets solve frequent sub-problems in coding challenges.
 
 - **Use `reserve()` When Building Strings:** If you are building a large string in a loop, calling `reserve()` beforehand can provide a significant speedup by avoiding multiple memory reallocations.
 - **`std::string::npos`:** The `find` family of functions returns this special static value (which is usually -1) to indicate failure (not found). Always check against `npos`.
+
+
+# C++ String Parsing Cheatsheet
+
+## 1. Headers
+```cpp
+#include <string>
+#include <vector>
+#include <sstream>
+#include <iostream>
+```
+
+## 2. CSV Parsing (String Stream)
+Used for parsing arrays (e.g., "0.1, 0.2, 0.3").
+
+```cpp
+std::string raw = "1.0,2.0,3.0";
+std::stringstream ss(raw);
+std::string segment;
+std::vector<double> data;
+
+// getline(stream, string, delimiter)
+while (std::getline(ss, segment, ',')) {
+    data.push_back(std::stod(segment));
+}
+```
+```cpp
+std::string data = "100 200 300 400";
+std::stringstream ss(data);
+std::string token;
+
+while (ss >> token) { // Extracts space-separated tokens
+    std::cout << token << std::endl;
+}
+```
+
+## 3. Delimiter Parsing (Find & Substr)
+Used for Header/Key-Value pairs (e.g., "VOLT:5.0").
+
+```cpp
+std::string msg = "VOLT:5.0";
+size_t pos = msg.find(":"); // Find separator
+
+if (pos != std::string::npos) {
+    // substr(start_index) extracts until end
+    std::string val = msg.substr(pos + 1); 
+}
+```
+
+## 4. Type Conversions
+
+| Function | Description | Example |
+| :--- | :--- | :--- |
+| `std::stoi(str)` | String to Int | `int i = std::stoi("100");` |
+| `std::stod(str)` | String to Double | `double d = std::stod("3.14");` |
+| `std::to_string(val)` | Number to String | `std::string s = std::to_string(5);` |

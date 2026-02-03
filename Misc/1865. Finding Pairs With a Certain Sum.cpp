@@ -1,43 +1,38 @@
-#include <vector>
-#include <unordered_map>
-#include <algorithm>
-using namespace std;
-
 class FindSumPairs {
-   public:
+public:
     vector<int> v1, v2;
-    unordered_map<int, int> umap;
+    unordered_map<int, int> umap1, umap2;
 
-    FindSumPairs(vector<int>& nums1, vector<int>& nums2) {
-        v1 = nums1, v2 = nums2;
-        std::sort(v1.begin(), v1.end());
-        for (int n : v2)
-            ++umap[n];
+    FindSumPairs(vector<int>& nums1, vector<int>& nums2): v1(nums1), v2(nums2) {
+        for(const int n: v1){
+            ++umap1[n];
+        }
+        for(const int n: v2){
+            ++umap2[n];
+        }
     }
-
+    
     void add(int index, int val) {
-        --umap[v2[index]];
-        v2[index] += val;
-        ++umap[v2[index]];
+        --umap2[v2[index]];
+        v2[index]+=val;
+        ++umap2[v2[index]];
     }
-
+    
     int count(int tot) {
-        int res = 0;
-        for (int n : v1) {
-            if (n >= tot)
-                break;
-            res += umap[tot - n];
+        int res=0;
+        for(auto const& [num, freq]: umap1){
+            res+=freq*(umap2[tot-num]);
         }
         return res;
     }
 };
 
-/**
- * Time Complexity
- * FindSumPairs: O(N1 log N1 + N2) on average
- * add: O(1) on average. Worst case O(U2), where U2 is the number of unique elements in nums2.
- * count: O(N1) on average. Worst case O(N1 * U2).
- */
+// 
+// Time Complexity
+// FindSumPairs: O(N1 + N2) on average
+// add: O(1) on average
+// count: O(U1) on average, where U1 is the number of unique elements in nums1
+// 
 // Space Complexity: O(N1+N2)
 
 /**

@@ -19,7 +19,7 @@
 |                    | `mySet.insert(10);`                                  | No effect, 10 is already there.                 |
 | **Check Existence**| `if (mySet.count(10)) { ... }`                     | Returns `1` if element exists, `0` otherwise.   |
 |                    | `auto it = mySet.find(20);`                         | Returns iterator to element or `mySet.end()`.   |
-| **Delete Element** | `mySet.erase(10);`                                   | Removes 10 from the set.                        |
+| **Delete Element** | `mySet.erase(10);`                                   |  Returns `1` if element was erased, `0` if not.                        |
 | **Size** | `mySet.size();`                                      | Number of unique elements.                      |
 | **Is Empty?** | `mySet.empty();`                                     | Returns `true` if no elements.                  |
 | **Clear All** | `mySet.clear();`                                     | Removes all elements.                           |

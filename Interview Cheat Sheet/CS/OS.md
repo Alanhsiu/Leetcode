@@ -2,7 +2,7 @@
 
 ## 1. OS Basics & The Kernel
 * **Operating System**: The main software that manages hardware and runs apps. Its key jobs are **Memory, Process, and File management**.
-* **Kernel**: The "brain" of the OS that has full control over the system.
+* **Kernel**: The core program that manages CPU, memory, and hardware devices. It runs in **Kernel Mode** (full access).
 * **Device Driver**: Special code that acts as a translator, letting the OS talk to specific hardware (like a GPU or Mouse).
 * **System Call**: A way for a user program to ask the OS for help (e.g., "Read this file").
 * **What happens during a System Call? User mode -> Kernel mode switch**

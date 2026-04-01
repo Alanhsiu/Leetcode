@@ -13,16 +13,16 @@
 * **Overloading**: C does not support function overloading. C++ supports it by generating unique names for functions based on their arguments.
 
 ## 3. Smart Pointers (C++ Memory Safety)
-* **Concept (RAII)**: We wrap raw pointers in objects so memory is automatically released when it goes out of scope.
+* **Concept (RAII, Resource Acquisition Is Initialization)**: We wrap raw pointers in objects so memory is automatically released when it goes out of scope.
 * **Unique Pointer**: Represents exclusive ownership. It cannot be copied, only moved using `std::move`. It has very low overhead.
 * **Shared Pointer**: Represents shared ownership. It uses a reference count and only deletes memory when the count hits zero.
 * **Weak Pointer**: A non-owning observer for a Shared Pointer. It solves the "circular reference" problem to prevent memory leaks.
 
 ## 4. Crucial Keywords
 * **static**: Inside a function, it keeps its value between calls. Globally, it limits the variable's visibility to *this file only*.
-* **volatile**: Tells the compiler "do not optimize this variable" because it can be changed externally by hardware or the OS.
-* **const**: Marks a variable as read-only. We often pass large objects by `const reference` to avoid copying them.
-* **inline**: Suggests the compiler replace the function call with the actual code to save execution time.
+* **volatile**: Tells the compiler "do not optimize this variable" because it can be changed unexpectedly by hardware registers, the OS, or an Interrupt Service Routine (ISR).
+* **const**: Marks a variable as read-only. In embedded systems, global `const` variables are often stored in ROM/Flash to save precious RAM. We also pass large objects by `const reference` to avoid copying.
+* **inline**: Suggests the compiler replace the function call with the actual code to save execution time, but at the cost of increasing the overall code size (ROM usage).
 
 ## 5. System Concepts
 * **Stack vs. Heap**: The Stack is for local variables and is managed automatically. The Heap is for dynamic memory and must be managed manually.

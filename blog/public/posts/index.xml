@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Posts on Alan&#39;s Tech Notes</title>
+    <link>http://localhost:1313/Leetcode/posts/</link>
+    <description>Recent content in Posts on Alan&#39;s Tech Notes</description>
+    <generator>Hugo</generator>
+    <language>zh-tw</language>
+    <lastBuildDate>Mon, 20 May 2024 12:00:00 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/Leetcode/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>深入淺出 LRU Cache：從 C&#43;&#43; 實作到 OS 記憶體管理</title>
+      <link>http://localhost:1313/Leetcode/posts/lru-cache-study/</link>
+      <pubDate>Mon, 20 May 2024 12:00:00 +0800</pubDate>
+      <guid>http://localhost:1313/Leetcode/posts/lru-cache-study/</guid>
+      <description>&lt;h2 id=&#34;題目解析&#34;&gt;題目解析&lt;/h2&gt;
+&lt;p&gt;LRU (Least Recently Used) 是系統底層非常重要的淘汰演算法。&lt;/p&gt;
+&lt;h2 id=&#34;c-實作要點&#34;&gt;C++ 實作要點&lt;/h2&gt;
+&lt;p&gt;為了達到 O(1) 的存取效率，我們結合了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;std::unordered_map&lt;/strong&gt;: 快速查找。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Doubly Linked List&lt;/strong&gt;: 快速調整資料權重。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;跨領域連結作業系統-os&#34;&gt;跨領域連結：作業系統 (OS)&lt;/h2&gt;
+&lt;p&gt;這與我在筆記中提到的 &lt;strong&gt;Virtual Memory&lt;/strong&gt; 概念高度相關。
+當 OS 發生 &lt;strong&gt;Page Fault&lt;/strong&gt; 且記憶體滿了，就會使用類似 LRU 的機制來決定置換哪個 Page。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

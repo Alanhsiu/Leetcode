@@ -1,0 +1,4 @@
+baseURL = "https://Alanhsiu.github.io/Leetcode/"
+languageCode = "zh-tw"
+title = "Alan's Tech Notes"
+theme = "PaperMod"

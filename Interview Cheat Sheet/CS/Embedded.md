@@ -2,15 +2,15 @@
 
 ## 1. Hardware Protocols Comparison
 
-| Feature | UART | I2C | SPI | CAN Bus |
+| Feature | UART (Universal Asynchronous Receiver-Transmitter) | I2C (Inter-Integrated Circuit) | SPI (Serial Peripheral Interface) | CAN Bus (Controller Area Network) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Wires** | 2 (TX, RX) | 2 (SDA, SCL) | 4+ (MOSI, MISO, SCLK, CS) | 2 (CAN_H, CAN_L) |
-| **Clock (Sync)** | Asynchronous | Synchronous | Synchronous | Asynchronous (Differential) |
+| **Clock (Sync)** | Asynchronous | Synchronous | Synchronous | Asynchronous (Differential Signal) |
 | **Duplex** | Full-Duplex | Half-Duplex | **Full-Duplex** | Half-Duplex |
 | **Speed** | Slow | Slow / Medium | **Very Fast** | Medium (Highly Reliable) |
 | **Addressing** | Point-to-Point (1 to 1) | **Device Address** (Software) | **Chip Select / CS** (Hardware) | **Message ID** (Broadcast & Priority) |
 | **Key Advantage** | Simple, no clock needed | Saves pins, easy to add slaves | High data throughput | Extreme noise immunity, priority-based |
-| **Your Resume / Use Case** | Debug consoles | **PMBus daemon (Google)** | Display/Flash memory | **Automotive standard (Nuro)** |
+| **Use Case** | Debug consoles | PMBus daemon | Display/Flash memory | Automotive standard |
 
 ## 2. Linux I2C Code Refresher (C++ Daemon)
 *In Linux user-space, I2C devices are treated as files (`/dev/i2c-X`). We use `ioctl` to talk to a specific slave address.*
@@ -38,7 +38,6 @@ read(file, buffer, 2);       // Read the data back
 * **Why FreeRTOS?**: In a bare-metal loop, checking ultrasonic sensors might block motor control. FreeRTOS allowed me to create separate, deterministic **Tasks**. I gave obstacle avoidance the highest priority to ensure hard real-time safety.
 * **Deterministic**: The core feature of an RTOS. It does not mean "fastest overall throughput," but it guarantees that a high-priority task will execute within a strict, predictable time limit.
 * **System Tick**: The "heartbeat" of the RTOS. A hardware timer interrupt (e.g., every 1ms) that wakes up the scheduler to check if a higher-priority task is ready.
-
 * **PID Controller**: A feedback loop for precise line tracking. 
   * **P (Proportional)**: Steers based on the current error.
   * **I (Integral)**: Corrects long-term drifting.

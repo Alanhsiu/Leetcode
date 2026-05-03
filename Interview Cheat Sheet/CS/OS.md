@@ -17,12 +17,6 @@
     * **Priority Scheduling**: Runs the highest-priority task first. *General OS (Non-preemptive)*: Waits for the current task to finish/yield. *RTOS (Preemptive)*: Immediately interrupts lower-priority tasks to guarantee strict deadlines.
 
 ## 3. Memory Management
-* **Virtual Memory**: Makes software think it has large, continuous memory by mapping "fake" addresses to real RAM.
-* **Page Fault**: When a program needs data not currently in RAM. The OS must pause and fetch it from the slow hard drive.
-* **Thrashing**: When the OS is too busy moving data in/out of RAM (swapping) instead of working. Happens when RAM is full.
-* **Fragmentation**: Wasted memory space. *Internal* is wasted inside a block; *External* is wasted between blocks.
-
-## 3. Memory Management
 * **Virtual Memory**: Maps logical addresses to physical RAM, giving programs the illusion of large, contiguous memory.
 * **Page Fault**: Occurs when a program requests data not currently in RAM. The OS must fetch it from disk/secondary storage.
 * **Thrashing**: The OS spends more time swapping pages in/out of RAM than executing processes.
@@ -49,7 +43,7 @@
     * **Detection & Recovery**: Let deadlock happen, scan for it, and **kill a process** to break the cycle.
     * **Ostrich Algorithm**: Just ignore it. Used by Windows/Linux because deadlocks are rare and checking is expensive.
 
-## 6. Hardware Concepts (Silicon Focus)
+## 6. Hardware Concepts
 * **DMA (Direct Memory Access)**: Allows hardware devices to read/write memory directly, offloading work from the CPU.
 * **Polling vs. Interrupts**: **Polling** continuously checks device status (wastes CPU). **Interrupts** allow hardware to signal the CPU to run an **ISR** (Interrupt Service Routine) immediately.
 * **ISR Golden Rules**: Keep them extremely short and fast. NEVER use blocking calls (like `printf`, `sleep`, or waiting for a mutex) inside an ISR.

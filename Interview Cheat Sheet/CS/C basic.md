@@ -2,8 +2,8 @@
 
 ## 1. OOP Concepts
 * **Encapsulation**: Bundling data with methods. We use `private` to hide internal state and `public` getters/setters to access it safely.
-* **Abstraction**: Hiding complex implementation details. We use Abstract Classes to define *what* a system does, without showing *how* it does it.
-* **Inheritance**: Creating a new class from an existing one. It establishes an "is-a" relationship to reuse code.
+* **Abstraction**: Hiding complex implementation details. We use Abstract Classes to define *what* a system does, without showing *how* it does it. (we use virtual functions to achieve this)
+* **Inheritance**: Creating a new class by extending an existing base class. It allows a derived class to inherit and reuse functionality from its parent.
 * **Polymorphism**: Treating different objects as the same base type. We use `virtual` functions and `override` to swap behavior at runtime. (A Vtable is a lookup table used by the compiler to support dynamic dispatch, ensuring the correct function is called at runtime.)
 
 ## 2. C vs. C++ (The Differences)

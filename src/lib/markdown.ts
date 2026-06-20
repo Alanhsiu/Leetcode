@@ -41,6 +41,19 @@ export async function renderMarkdown(md: string): Promise<string> {
   return (await marked.parse(md)) as string;
 }
 
+/** Keep the first <h1> as the page heading; demote any later <h1> to <h2> so
+ *  each rendered document has exactly one top-level heading (accessibility). */
+export function demoteExtraH1(html: string): string {
+  let first = true;
+  return html.replace(/<h1([ >])([\s\S]*?)<\/h1>/g, (match, sep: string, inner: string) => {
+    if (first) {
+      first = false;
+      return match;
+    }
+    return `<h2${sep}${inner}</h2>`;
+  });
+}
+
 /** Strip markdown to plain text for search indexing / excerpts. */
 export function markdownToText(md: string): string {
   return md

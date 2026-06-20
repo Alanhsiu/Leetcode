@@ -3,13 +3,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import CodeBlock from "../../components/CodeBlock.astro";
 import { href } from "../../lib/url";
 import { getCheatsheets } from "../../lib/content";
-import { renderMarkdown } from "../../lib/markdown";
+import { renderMarkdown, demoteExtraH1 } from "../../lib/markdown";
 
 export async function getStaticPaths() {
   return getCheatsheets().map((c) => ({ params: { slug: c.slug }, props: { sheet: c } }));
 }
 const { sheet } = Astro.props;
-const html = sheet.isCode ? "" : await renderMarkdown(sheet.body);
+const html = sheet.isCode ? "" : demoteExtraH1(await renderMarkdown(sheet.body));
+// Most cheat-sheet markdown files open with their own `# Title` h1. Only add a
+// page-level h1 when the content doesn't provide one (code sheets, or a file
+// that starts at a deeper heading) — avoids duplicate <h1> for accessibility.
+const contentHasH1 = !sheet.isCode && /^\s*#\s+\S/m.test(sheet.body.split("\n").find((l) => l.trim()) ?? "");
 ---
 <BaseLayout title={sheet.title} description={`Cheat sheet: ${sheet.title} (${sheet.group}).`}>
   <nav class="text-sm muted mb-4">
@@ -19,8 +23,8 @@ const html = sheet.isCode ? "" : await renderMarkdown(sheet.body);
   </nav>
   <article>
     <header class="mb-6">
-      <h1 class="text-3xl font-bold">{sheet.title}</h1>
-      <p class="muted text-xs mt-1 uppercase tracking-wide">{sheet.group}</p>
+      <p class="muted text-xs uppercase tracking-wide">{sheet.group}{sheet.isCode ? " · code" : ""}</p>
+      {!contentHasH1 && <h1 class="text-3xl font-bold mt-1">{sheet.title}</h1>}
     </header>
     {sheet.isCode
       ? <CodeBlock code={sheet.body} lang={sheet.language} />

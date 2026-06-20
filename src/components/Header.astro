@@ -70,10 +70,12 @@ function isActive(path: string) {
   const menuBtn = document.getElementById("mobile-menu-btn");
   const menu = document.getElementById("mobile-menu");
   menuBtn?.addEventListener("click", () => {
-    const open = menu?.classList.toggle("hidden");
-    menuBtn.setAttribute("aria-expanded", String(open === false));
-    if (menu && open === false) menu.style.display = "flex";
-    else if (menu) menu.style.display = "";
+    const hidden = menu?.classList.toggle("hidden");
+    menuBtn.setAttribute("aria-expanded", String(hidden === false));
+  });
+  // Close the mobile menu after following a link.
+  menu?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).tagName === "A") menu.classList.add("hidden");
   });
 
   // Open search via the header button or the "/" key

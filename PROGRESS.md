@@ -41,5 +41,40 @@ Chronological log of the `redesign` rebuild. Newest entries at the bottom of eac
 - `.github/workflows/deploy.yml` (push to `main`): builds with official `withastro/action` and deploys to Pages with `contents: read`, `pages: write`, `id-token: write` + concurrency. Replaces the old Hugo→gh-pages flow.
 - One-time repo setting required: **Settings → Pages → Source = "GitHub Actions"** (documented in README).
 
-## Phase 6 — Self-review
-- (in progress)
+## Phase 6 — Self-review ✅
+Looped build → inspect → fix several times. Findings fixed:
+- **Mislabeled-source correctness bug:** files whose number matched an NC150 problem with a *different* title were wrongly inheriting that problem's slug/difficulty (so the NC150 "Valid Parentheses" / "Reconstruct Itinerary" tiles could open the wrong file). Tightened matching to require the title to agree. This exposed that `332. Coin Challenge.cpp` is really #322 Coin Change (its fn is `coinChange`) — mapped it correctly (your solution now wins over the AI one) and added an AI Reconstruct Itinerary for the freed-up #332. Net: a *true* 150/150, 0 Unknown difficulty.
+- **Accessibility — duplicate h1:** cheatsheet/reference markdown carries its own `# ` heading; pages were adding a second `<h1>`. Now exactly **one h1 on all 244 pages** (page h1 only when content lacks one; extra content h1s demoted to h2).
+- Simplified the mobile-menu toggle; it now also closes on link tap.
+- Verified: `astro check` 0 errors; build 244 pages; link checker 8476 links, 0 broken; `viz-test` all 18 render every frame; preview server serves every sampled route 200; no `<img>` without `alt`; reduced-motion CSS present; search index = 217 docs (188 problems + 18 cheat sheets + 11 reference).
+
+## Phase 7 — Docs & handoff ✅
+- `README.md` (architecture, run, add-a-note, CI/CD + the one-time Pages setting), `PLAN.md`, this log, and `NEEDS_REVIEW.md` (36 AI items + copyright notes + the mislabel decisions) all written.
+
+---
+
+## SUMMARY
+
+Rebuilt the repo into an Astro 5 + TypeScript static site driven entirely by the four read-only content folders (never modified). **188 problems** rendered (152 of your C++ solutions + 36 AI-authored for full **150/150** NeetCode coverage), 18 cheat sheets, 11 C++ references, and **18 interactive, animated visualizations** auto-embedded per pattern. Full-text search, pattern/difficulty/status filters, cram mode, and localStorage progress + dashboard. CI checks every PR (type-check, viz smoke test, build, link-check); pushing to `main` builds and deploys to Pages. Build is green throughout; `main` untouched.
+
+### What to look at first
+1. `/` then `/visualizations` — the animation library (play/pause/step).
+2. `/neetcode150` — the 150 grid; AI-covered tiles show a "⚠ AI-generated" badge on their page.
+3. A problem page, e.g. `/problems/1-two-sum` (your note + embedded viz) and `/problems/56-merge-intervals` (an AI-generated one).
+4. `NEEDS_REVIEW.md` — the 36 AI solutions to verify + two mislabeled source files.
+
+### Preview locally
+```bash
+npm install        # approve esbuild + sharp install scripts if prompted
+npm run dev        # http://localhost:4321/Leetcode/
+# or the production build:
+npm run build && npm run preview
+```
+
+### Go live (your move — I did NOT touch main)
+1. Review this branch; merge `redesign` → `main`:
+   ```bash
+   git checkout main && git merge redesign && git push origin main
+   ```
+2. One-time: repo **Settings → Pages → Build and deployment → Source = "GitHub Actions"** (replaces the old gh-pages deploy).
+3. The `deploy.yml` workflow then builds + publishes to https://alanhsiu.github.io/Leetcode/ on that push and on every future push to `main` — including when you just drop a new note file into one of the four folders.

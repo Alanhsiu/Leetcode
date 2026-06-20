@@ -24,7 +24,8 @@ against the LeetCode judge** — verify correctness before trusting them. Each l
 - 778 Swim in Rising Water · 787 Cheapest Flights Within K Stops (Bellman-Ford)
 
 **DP / Greedy / Intervals / Bit**
-- 746 Min Cost Climbing Stairs · 322 Coin Change · 300 Longest Increasing Subsequence (O(n log n))
+- 746 Min Cost Climbing Stairs · 300 Longest Increasing Subsequence (O(n log n))
+- 332 Reconstruct Itinerary (Hierholzer's algorithm) — added during self-review (see §C)
 - 416 Partition Equal Subset Sum · 494 Target Sum · 329 Longest Increasing Path in a Matrix · 312 Burst Balloons (interval DP)
 - 846 Hand of Straights · 1899 Merge Triplets to Form Target Triplet · 763 Partition Labels
 - 56 Merge Intervals · 435 Non-overlapping Intervals · 1851 Minimum Interval to Include Each Query
@@ -42,6 +43,7 @@ and the standard `TreeNode` definition.
 
 ## C. Source-data quirks & decisions
 Filenames are treated as the source of truth for problem number + title. A few source files appear mislabeled relative to the real LeetCode problem of that number; the site shows them as-named and the official-link slug may therefore not resolve. Confirm whether to relabel (in your read-only folders, which I did not touch):
-- `NeetCode 150/20. Diameter of Binary Tree.cpp` — #20 on LeetCode is "Valid Parentheses"; "Diameter of Binary Tree" is #543. (There is also a separate `20. Valid Parentheses.cpp`.)
-- `NeetCode 150/332. Coin Challenge.cpp` — #332 is "Reconstruct Itinerary"; "Coin Challenge" is not a standard LeetCode title.
+- `NeetCode 150/20. Diameter of Binary Tree.cpp` — correctly matched by **title** to LeetCode **#543 Diameter of Binary Tree** (it is in the NeetCode 150); only the filename number `20` is wrong, so the page header shows "20." Rename to `543. …` to fix the displayed number. (A correct, separate `20. Valid Parentheses.cpp` also exists and is unaffected.)
+- `NeetCode 150/332. Coin Challenge.cpp` — **resolved.** Its function is `coinChange`, so it is actually LeetCode **#322 Coin Change** mislabeled `332`. It is now mapped to the `coin-change` problem, so your own solution is shown (and the AI-generated coin-change is skipped). The page still shows the filename's "332. Coin Challenge" — rename to `322. Coin Change.cpp` to fix. Because this freed up #332, I added an AI-generated **Reconstruct Itinerary** (the real #332) — see §A.
+- Decision: a file is treated as *mislabeled* when its number maps to a NeetCode 150 problem whose title doesn't match the filename — in that case it does NOT inherit that problem's metadata/official link (prevents two files claiming one slug). This is why correcting the data above keeps coverage at a *true* 150/150.
 - _(any further quirks discovered during the build are appended here)_

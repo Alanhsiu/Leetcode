@@ -2,13 +2,13 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { href } from "../../lib/url";
 import { getReference } from "../../lib/content";
-import { renderMarkdown } from "../../lib/markdown";
+import { renderMarkdown, demoteExtraH1 } from "../../lib/markdown";
 
 export async function getStaticPaths() {
   return getReference().map((r) => ({ params: { slug: r.slug }, props: { ref: r } }));
 }
 const { ref } = Astro.props;
-const html = await renderMarkdown(ref.body);
+const html = demoteExtraH1(await renderMarkdown(ref.body));
 ---
 <BaseLayout title={ref.title} description={`C++ reference: ${ref.title}.`}>
   <nav class="text-sm muted mb-4">

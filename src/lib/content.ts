@@ -157,7 +157,10 @@ function buildProblem(path: string, code: string, source: ProblemSource): Proble
   let meta = bySlug.get(titleSlug) ?? extraBySlug.get(titleSlug);
   if (!meta) {
     const candidates = [...(byNumber.get(number) ?? []), ...(extraByNumber.get(number) ?? [])];
-    meta = candidates.find((c) => slugify(c.title) === titleSlug) ?? candidates[0];
+    // Only accept a number match whose curated title actually agrees with the
+    // file's title. A pure number match with a different title means the file
+    // is mislabeled — don't let it claim another problem's slug/difficulty.
+    meta = candidates.find((c) => slugify(c.title) === titleSlug);
   }
 
   const difficulty: DifficultyOrUnknown = meta?.difficulty ?? "Unknown";

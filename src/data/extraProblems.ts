@@ -51,4 +51,8 @@ export const EXTRA_PROBLEMS: ExtraProblem[] = [
   { number: 1801, title: "Number of Orders in the Backlog", slug: "number-of-orders-in-the-backlog", difficulty: "Medium", category: "Heap / Priority Queue" },
   { number: 1865, title: "Finding Pairs With a Certain Sum", slug: "finding-pairs-with-a-certain-sum", difficulty: "Medium", category: "Arrays & Hashing" },
   { number: 1929, title: "Concatenation of Array", slug: "concatenation-of-array", difficulty: "Easy", category: "Arrays & Hashing" },
+  // The file "332. Coin Challenge.cpp" is mislabeled: its function is coinChange
+  // and it is actually LeetCode #322 Coin Change. Map it to the real problem so
+  // the user's own solution is used (the AI-generated coin-change is then skipped).
+  { number: 332, title: "Coin Challenge", slug: "coin-change", difficulty: "Medium", category: "1-D Dynamic Programming" },
 ];

@@ -4,6 +4,7 @@
 // automatically with zero wiring.
 import { NEETCODE_150, NEETCODE_CATEGORIES, type Difficulty } from "../data/neetcode150";
 import { EXTRA_PROBLEMS } from "../data/extraProblems";
+import { AI_SOLUTIONS } from "../data/aiSolutions";
 import { slugify } from "./url";
 import { markdownToText } from "./markdown";
 
@@ -58,6 +59,8 @@ export interface Problem {
   leetcodeUrl?: string;
   inNeetCode150: boolean;
   aiGenerated: boolean;
+  summary?: string; // original paraphrase (AI-generated coverage only)
+  approach?: string; // markdown approach notes (AI-generated coverage only)
   searchText: string;
 }
 
@@ -90,6 +93,7 @@ for (const p of NEETCODE_150) {
   byNumber.get(p.number)!.push(entry);
 }
 const nc150Slugs = new Set(NEETCODE_150.map((p) => p.slug));
+const ncFullBySlug = new Map(NEETCODE_150.map((p) => [p.slug, p]));
 
 const extraBySlug = new Map<string, { difficulty: Difficulty; category: string; slug: string; title: string }>();
 const extraByNumber = new Map<number, { difficulty: Difficulty; category: string; slug: string; title: string }[]>();
@@ -188,6 +192,32 @@ function buildProblem(path: string, code: string, source: ProblemSource): Proble
   };
 }
 
+function buildAiProblem(ai: (typeof AI_SOLUTIONS)[number]): Problem | null {
+  const nc = ncFullBySlug.get(ai.slug);
+  if (!nc) return null; // only AI-cover known NeetCode 150 problems
+  return {
+    routeSlug: `${nc.number}-${ai.slug}`,
+    number: nc.number,
+    title: nc.title,
+    source: "neetcode",
+    code: ai.code,
+    language: "cpp",
+    timeComplexity: ai.timeComplexity,
+    spaceComplexity: ai.spaceComplexity,
+    difficulty: nc.difficulty,
+    patterns: [nc.category],
+    leetcodeSlug: ai.slug,
+    leetcodeUrl: `https://leetcode.com/problems/${ai.slug}/`,
+    inNeetCode150: true,
+    aiGenerated: true,
+    summary: ai.summary,
+    approach: ai.approach,
+    searchText: [nc.title, `problem ${nc.number}`, nc.category, nc.difficulty, ai.summary, ai.code]
+      .join(" ")
+      .toLowerCase(),
+  };
+}
+
 let _problems: Problem[] | null = null;
 
 export function getProblems(): Problem[] {
@@ -210,6 +240,17 @@ export function getProblems(): Problem[] {
   };
   add(neetcodeRaw, "neetcode");
   add(miscRaw, "misc");
+
+  // Add AI-generated coverage for NeetCode 150 problems we have no note for.
+  const coveredSlugs = new Set(out.filter((p) => p.leetcodeSlug).map((p) => p.leetcodeSlug));
+  for (const ai of AI_SOLUTIONS) {
+    if (coveredSlugs.has(ai.slug)) continue;
+    const p = buildAiProblem(ai);
+    if (!p || seen.has(p.routeSlug)) continue;
+    seen.add(p.routeSlug);
+    out.push(p);
+  }
+
   out.sort((a, b) => a.number - b.number || a.title.localeCompare(b.title));
   _problems = out;
   return out;

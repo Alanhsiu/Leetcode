@@ -205,6 +205,49 @@ html.dark .shiki, html.dark .shiki span {
 .viz-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .viz-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 
+/* ---- Visualization engine ---- */
+.viz-stage {
+  /* palette (light) */
+  --viz-cell: var(--bg-elev);
+  --viz-stroke: var(--border);
+  --viz-text: var(--text);
+  --viz-text-on: #ffffff;
+  --viz-active: #6366f1;
+  --viz-compare: #f59e0b;
+  --viz-done: #22c55e;
+  --viz-visited: #818cf8;
+  --viz-highlight: #ec4899;
+  --viz-muted: #94a3b8;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+.dark .viz-stage {
+  --viz-cell: #1e293b;
+  --viz-stroke: #334155;
+}
+.viz-stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.viz-stage svg { display: block; }
+/* smooth motion between frames (disabled under reduced-motion globally) */
+.viz-stage svg rect, .viz-stage svg circle, .viz-stage svg line, .viz-stage svg text, .viz-stage svg g {
+  transition: transform 0.35s ease, fill 0.25s ease, opacity 0.25s ease, cx 0.35s ease, cy 0.35s ease, x 0.35s ease, y 0.35s ease;
+}
+.viz-caption {
+  font-size: 0.85rem;
+  color: var(--text);
+  min-height: 2.4em;
+  margin: 0.6rem 0.2rem;
+  line-height: 1.45;
+}
+.viz-controls {
+  display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+}
+.viz-counter { font-size: 0.75rem; font-family: var(--font-mono); min-width: 4ch; text-align: center; }
+.viz-progress { flex: 1; min-width: 80px; accent-color: var(--accent); cursor: pointer; }
+.viz-speed { min-width: 3.2rem; }
+
 /* Screen-reader only */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

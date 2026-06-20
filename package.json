@@ -9,7 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "linkcheck": "node scripts/linkcheck.mjs"
+    "linkcheck": "node scripts/linkcheck.mjs",
+    "viz-test": "node --experimental-strip-types scripts/viz-smoke.mjs"
   },
   "dependencies": {
     "astro": "^5.6.1",

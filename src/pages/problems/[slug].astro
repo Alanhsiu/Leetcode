@@ -6,6 +6,7 @@ import ProgressControls from "../../components/ProgressControls.astro";
 import { getProblems } from "../../lib/content";
 import { href, slugify } from "../../lib/url";
 import { CATEGORY_VIZ } from "../../lib/patterns";
+import { renderMarkdown } from "../../lib/markdown";
 
 export function getStaticPaths() {
   const problems = getProblems();
@@ -24,7 +25,8 @@ const related = getProblems()
   .filter((q) => q.routeSlug !== p.routeSlug && q.patterns.some((x) => p.patterns.includes(x)))
   .slice(0, 6);
 const vizIds = p.patterns.flatMap((pat) => CATEGORY_VIZ[pat] ?? []);
-const sourceLabel = p.source === "neetcode" ? "NeetCode 150" : "Misc";
+const sourceLabel = p.aiGenerated ? "AI-generated coverage" : p.source === "neetcode" ? "NeetCode 150" : "Misc";
+const approachHtml = p.approach ? await renderMarkdown(p.approach) : "";
 ---
 <BaseLayout title={`${p.number}. ${p.title}`} description={`C++ solution and notes for LeetCode ${p.number}. ${p.title} — pattern: ${p.patterns.join(", ")}.`}>
   <nav class="text-sm muted mb-4">
@@ -67,6 +69,20 @@ const sourceLabel = p.source === "neetcode" ? "NeetCode 150" : "Misc";
       <div><dt class="muted text-xs uppercase">Space</dt><dd class="font-mono">{p.spaceComplexity ?? "—"}</dd></div>
     </dl>
   </section>
+
+  {p.aiGenerated && (
+    <section class="surface rounded-xl p-4 mb-6" style="border-color: color-mix(in srgb, var(--color-medium) 45%, var(--border));">
+      <p class="text-sm"><strong class="badge badge-medium">⚠ AI-generated</strong></p>
+      <p class="text-sm muted mt-2">I don't have my own note for this one yet, so the summary and solution below were written by an AI assistant and are <strong>not yet verified</strong>. Treat them as a starting point.</p>
+      {p.summary && <p class="mt-3"><span class="muted text-xs uppercase tracking-wide block mb-1">Summary</span>{p.summary}</p>}
+      {approachHtml && (
+        <div class="mt-3">
+          <span class="muted text-xs uppercase tracking-wide block mb-1">Approach</span>
+          <div class="prose prose-sm" set:html={approachHtml} />
+        </div>
+      )}
+    </section>
+  )}
 
   {vizIds.length > 0 && (
     <section class="mb-6" id="viz-embed">

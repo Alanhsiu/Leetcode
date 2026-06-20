@@ -1,35 +1,48 @@
-name: Deploy Hugo Blog to GitHub Pages
+name: Deploy site to GitHub Pages
+
+# Builds the Astro site and deploys it to GitHub Pages on every push to main.
+# Adding a new note to any of the four content folders and pushing to main is
+# enough to rebuild + redeploy automatically.
+#
+# NOTE: this uses the official GitHub Pages "GitHub Actions" deployment flow.
+# One-time repo setting: Settings -> Pages -> Build and deployment ->
+# Source = "GitHub Actions" (replaces the old gh-pages branch deploy).
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress prod deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Build with Astro
+        uses: withastro/action@v3
         with:
-          submodules: recursive
-          fetch-depth: 0
+          node-version: 22
+        # withastro/action installs deps, runs `astro build`, and uploads the
+        # built site as a Pages artifact (base/site come from astro.config.mjs).
 
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3
-        with:
-          hugo-version: 'latest'
-
-      - name: Build Hugo
-        run: hugo --minify
-        working-directory: ./blog
-
-      - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./blog/public
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

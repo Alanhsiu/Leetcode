@@ -1,0 +1,40 @@
+name: CI
+
+# Runs on pull requests (and pushes to non-main branches): type-check, build,
+# verify visualizations, and fail on any broken internal link.
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check (astro check)
+        run: npm run check
+
+      - name: Visualization smoke test
+        run: npm run viz-test
+
+      - name: Build
+        run: npm run build
+
+      - name: Check internal links
+        run: npm run linkcheck

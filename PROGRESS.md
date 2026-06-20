@@ -30,5 +30,16 @@ Chronological log of the `redesign` rebuild. Newest entries at the bottom of eac
 - Embedded automatically: each pattern page + every problem in a pattern shows its visualization (via `CATEGORY_VIZ`). Full gallery at `/visualizations`.
 - Wrote a fake-DOM smoke test (`npm run viz-test`) that mounts each viz and steps through **every frame** — all 18 pass with 0 runtime errors. Type-check: 0 errors. Build: 208 pages, 0 broken links.
 
-## Phase 4 — NeetCode 150 coverage
+## Phase 4 — NeetCode 150 coverage ✅
+- `/neetcode150` grid: all 150 grouped by the 18 patterns, each tile linking to my note or the official problem, with coverage counts, a progress bar, and live "done" counter from localStorage.
+- Filled `extraProblems.ts` with factual difficulty/pattern/slug for the 38 non-NC150 problems that previously showed "Unknown" → **0 Unknown difficulty** remain (39 Easy / 124 Medium / 25 Hard across 188 problems).
+- Added AI-generated coverage for the **36** NeetCode 150 problems with no note of mine: original summary + approach + C++ solution each, tagged `aiGenerated: true`, badged on-site, listed in NEEDS_REVIEW.md. **Coverage is now 150/150.**
+- Total rendered problems: **188** (152 from my folders + 36 AI).
+
+## Phase 5 — CI/CD ✅
+- `.github/workflows/ci.yml` (PRs / non-main pushes): `npm ci` → `astro check` → viz smoke test → `build` → internal-link check (fails on broken links).
+- `.github/workflows/deploy.yml` (push to `main`): builds with official `withastro/action` and deploys to Pages with `contents: read`, `pages: write`, `id-token: write` + concurrency. Replaces the old Hugo→gh-pages flow.
+- One-time repo setting required: **Settings → Pages → Source = "GitHub Actions"** (documented in README).
+
+## Phase 6 — Self-review
 - (in progress)

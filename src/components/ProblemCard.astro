@@ -1,0 +1,34 @@
+---
+import type { Problem } from "../lib/content";
+import { href, slugify } from "../lib/url";
+import DifficultyBadge from "./DifficultyBadge.astro";
+
+interface Props { problem: Problem; }
+const { problem: p } = Astro.props;
+---
+<article
+  class="card p-4 flex flex-col gap-2"
+  data-problem
+  data-title={`${p.number} ${p.title}`.toLowerCase()}
+  data-difficulty={p.difficulty}
+  data-pattern={p.patterns.map((x) => slugify(x)).join(" ")}
+  data-source={p.source}
+  data-nc150={String(p.inNeetCode150)}
+  data-slug={p.routeSlug}
+>
+  <div class="flex items-start gap-2">
+    <span class="progress-dot muted shrink-0 mt-0.5" data-progress-indicator={p.routeSlug} aria-label="Not started">○</span>
+    <a href={href(`/problems/${p.routeSlug}`)} class="flex-1 font-semibold leading-snug hover:text-[var(--accent)]">
+      <span class="muted font-mono text-sm">{p.number}.</span> {p.title}
+    </a>
+    <DifficultyBadge difficulty={p.difficulty} />
+  </div>
+  <div class="flex flex-wrap items-center gap-1.5 text-xs pl-7">
+    {p.patterns.map((pat) => (
+      <a href={href(`/patterns/${slugify(pat)}`)} class="badge badge-tag hover:text-[var(--accent)]">{pat}</a>
+    ))}
+    {p.timeComplexity && <span class="badge badge-complexity" title="Time complexity">⏱ {p.timeComplexity}</span>}
+    {p.spaceComplexity && <span class="badge badge-complexity" title="Space complexity">▦ {p.spaceComplexity}</span>}
+    {p.inNeetCode150 && <span class="badge badge-tag" title="In the NeetCode 150">NC150</span>}
+  </div>
+</article>

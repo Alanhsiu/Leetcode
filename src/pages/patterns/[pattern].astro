@@ -1,0 +1,63 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProblemCard from "../../components/ProblemCard.astro";
+import { href } from "../../lib/url";
+import { PATTERNS, VISUALIZATIONS } from "../../lib/patterns";
+import { getProblemsByPattern } from "../../lib/content";
+
+export function getStaticPaths() {
+  return PATTERNS.map((p) => ({ params: { pattern: p.slug }, props: { pattern: p } }));
+}
+const { pattern } = Astro.props;
+const problems = getProblemsByPattern(pattern.name);
+const vizMetas = pattern.vizIds
+  .map((id) => VISUALIZATIONS.find((v) => v.id === id))
+  .filter((v): v is NonNullable<typeof v> => Boolean(v));
+const byDiff = { Easy: 0, Medium: 0, Hard: 0, Unknown: 0 } as Record<string, number>;
+for (const p of problems) byDiff[p.difficulty]++;
+---
+<BaseLayout title={pattern.name} description={pattern.blurb} wide>
+  <nav class="text-sm muted mb-4">
+    <a href={href("/patterns")} class="hover:text-[var(--accent)]">Patterns</a>
+    <span class="mx-1">/</span><span>{pattern.name}</span>
+  </nav>
+
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">{pattern.name}</h1>
+    <p class="muted mt-2 max-w-2xl">{pattern.blurb}</p>
+    <div class="flex flex-wrap gap-2 mt-3 text-xs">
+      <span class="badge badge-tag">{problems.length} problems</span>
+      {byDiff.Easy > 0 && <span class="badge badge-easy">{byDiff.Easy} Easy</span>}
+      {byDiff.Medium > 0 && <span class="badge badge-medium">{byDiff.Medium} Medium</span>}
+      {byDiff.Hard > 0 && <span class="badge badge-hard">{byDiff.Hard} Hard</span>}
+    </div>
+  </header>
+
+  {vizMetas.length > 0 && (
+    <section class="mb-8">
+      <h2 class="font-semibold mb-3">Visualize it</h2>
+      <div class="grid gap-4">
+        {vizMetas.map((v) => (
+          <div>
+            <p class="text-sm muted mb-1.5"><strong class="text-[var(--text)]">{v.title}</strong> — {v.blurb}</p>
+            <div data-viz-mount={v.id}></div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section>
+    <h2 class="font-semibold mb-3">Problems</h2>
+    {problems.length > 0 ? (
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {problems.map((p) => <ProblemCard problem={p} />)}
+      </div>
+    ) : <p class="muted">No problems yet for this pattern.</p>}
+  </section>
+</BaseLayout>
+
+<script>
+  import { mountViz } from "../../scripts/viz-loader.ts";
+  document.querySelectorAll<HTMLElement>("[data-viz-mount]").forEach((el) => mountViz(el, el.dataset.vizMount!));
+</script>

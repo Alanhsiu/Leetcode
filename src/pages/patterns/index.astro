@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { href } from "../../lib/url";
+import { PATTERNS } from "../../lib/patterns";
+import { getProblemsByPattern } from "../../lib/content";
+
+const cards = PATTERNS.map((p) => ({ ...p, count: getProblemsByPattern(p.name).length }));
+---
+<BaseLayout title="Patterns" wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">Patterns</h1>
+    <p class="muted mt-1">The 18 NeetCode roadmap categories. Each bundles its problems and an interactive visualization.</p>
+  </header>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {cards.map((p) => (
+      <a href={href(`/patterns/${p.slug}`)} class="card p-4 block">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">{p.name}</h2>
+          <span class="badge badge-tag">{p.count}</span>
+        </div>
+        <p class="mt-1.5 text-sm muted">{p.blurb}</p>
+        {p.vizIds.length > 0 && <p class="mt-2 text-xs" style="color: var(--accent);">▶ {p.vizIds.length} visualization{p.vizIds.length > 1 ? "s" : ""}</p>}
+      </a>
+    ))}
+  </div>
+</BaseLayout>

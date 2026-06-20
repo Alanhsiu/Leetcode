@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CodeBlock from "../../components/CodeBlock.astro";
+import { href } from "../../lib/url";
+import { getCheatsheets } from "../../lib/content";
+import { renderMarkdown } from "../../lib/markdown";
+
+export async function getStaticPaths() {
+  return getCheatsheets().map((c) => ({ params: { slug: c.slug }, props: { sheet: c } }));
+}
+const { sheet } = Astro.props;
+const html = sheet.isCode ? "" : await renderMarkdown(sheet.body);
+---
+<BaseLayout title={sheet.title} description={`Cheat sheet: ${sheet.title} (${sheet.group}).`}>
+  <nav class="text-sm muted mb-4">
+    <a href={href("/cheatsheets")} class="hover:text-[var(--accent)]">Cheat Sheets</a>
+    <span class="mx-1">/</span><span>{sheet.group}</span>
+    <span class="mx-1">/</span><span>{sheet.title}</span>
+  </nav>
+  <article>
+    <header class="mb-6">
+      <h1 class="text-3xl font-bold">{sheet.title}</h1>
+      <p class="muted text-xs mt-1 uppercase tracking-wide">{sheet.group}</p>
+    </header>
+    {sheet.isCode
+      ? <CodeBlock code={sheet.body} lang={sheet.language} />
+      : <div class="prose" set:html={html} />}
+  </article>
+</BaseLayout>

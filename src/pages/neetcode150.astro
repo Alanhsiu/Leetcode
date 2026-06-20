@@ -1,0 +1,71 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import DifficultyBadge from "../components/DifficultyBadge.astro";
+import { href, slugify } from "../lib/url";
+import { getNeetCodeCoverage } from "../lib/content";
+
+const coverage = getNeetCodeCoverage();
+const total = coverage.reduce((a, c) => a + c.entries.length, 0);
+const covered = coverage.reduce((a, c) => a + c.entries.filter((e) => e.problem).length, 0);
+---
+<BaseLayout title="NeetCode 150" description="Structured index of all 150 NeetCode problems by pattern, with links to my notes and the official problems." wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">NeetCode 150</h1>
+    <p class="muted mt-1">All 150 problems grouped by pattern. {covered}/{total} have a solution note; click a tile to open it. Track your own progress with the dots.</p>
+    <div class="mt-4 flex items-center gap-4 flex-wrap">
+      <div class="flex-1 min-w-[200px] h-2.5 rounded-full surface-elev overflow-hidden">
+        <div class="h-full" style={`width:${(covered / total) * 100}%; background: var(--accent);`}></div>
+      </div>
+      <span class="text-sm muted"><span data-progress-summary>0</span> done · {covered} noted · {total} total</span>
+    </div>
+  </header>
+
+  <div class="grid gap-7">
+    {coverage.map((cat) => (
+      <section>
+        <div class="flex items-baseline justify-between mb-2">
+          <h2 class="font-semibold">
+            <a href={href(`/patterns/${slugify(cat.category)}`)} class="hover:text-[var(--accent)]">{cat.category}</a>
+          </h2>
+          <span class="text-xs muted">{cat.entries.filter((e) => e.problem).length}/{cat.entries.length} noted</span>
+        </div>
+        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {cat.entries.map((e) => {
+            const slug = e.problem?.routeSlug;
+            const inner = (
+              <div class="card p-3 flex items-center gap-2 text-sm h-full">
+                {slug
+                  ? <span class="progress-dot muted shrink-0" data-progress-indicator={slug}>○</span>
+                  : <span class="progress-dot muted shrink-0" title="No note yet">·</span>}
+                <span class="flex-1 leading-snug">
+                  <span class="muted font-mono">{e.nc.number}.</span> {e.nc.title}
+                  {!e.problem && <span class="muted text-xs ml-1">(no note)</span>}
+                </span>
+                <DifficultyBadge difficulty={e.nc.difficulty} />
+              </div>
+            );
+            return slug
+              ? <a href={href(`/problems/${slug}`)}>{inner}</a>
+              : <a href={`https://leetcode.com/problems/${e.nc.slug}/`} target="_blank" rel="noopener" class="opacity-75">{inner}</a>;
+          })}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<script>
+  // Count how many NC150-noted tiles are marked solved/confident.
+  function update() {
+    let prog: Record<string, string> = {};
+    try { prog = JSON.parse(localStorage.getItem("dsa-progress") || "{}"); } catch {}
+    const slugs = new Set(
+      Array.from(document.querySelectorAll<HTMLElement>("[data-progress-indicator]")).map((e) => e.dataset.progressIndicator!)
+    );
+    let done = 0;
+    for (const s of slugs) if (prog[s] === "solved" || prog[s] === "confident") done++;
+    document.querySelectorAll("[data-progress-summary]").forEach((el) => (el.textContent = String(done)));
+  }
+  update();
+  document.addEventListener("progress-changed", update);
+</script>

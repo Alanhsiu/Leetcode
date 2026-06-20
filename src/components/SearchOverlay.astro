@@ -1,0 +1,141 @@
+---
+import { href } from "../lib/url";
+const indexUrl = href("/search-index.json");
+---
+<div id="search-overlay" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-label="Search" data-index-url={indexUrl}>
+  <div id="search-backdrop" class="absolute inset-0" style="background: rgb(0 0 0 / 0.5);"></div>
+  <div class="relative mx-auto mt-[10vh] w-[92%] max-w-2xl surface rounded-xl shadow-2xl overflow-hidden">
+    <div class="flex items-center gap-2 px-4 border-b border-token">
+      <span aria-hidden="true" class="muted">🔍</span>
+      <input
+        id="search-input"
+        type="search"
+        placeholder="Search problems, patterns, cheat sheets…"
+        class="w-full bg-transparent py-3.5 outline-none text-base"
+        autocomplete="off"
+        aria-label="Search query"
+        aria-controls="search-results"
+      />
+      <kbd class="text-xs muted border-token border rounded px-1.5 py-0.5">Esc</kbd>
+    </div>
+    <ul id="search-results" class="max-h-[55vh] overflow-y-auto p-2" role="listbox"></ul>
+    <p id="search-empty" class="px-4 py-6 text-center muted text-sm hidden">No matches.</p>
+    <div class="px-4 py-2 border-t border-token text-xs muted flex gap-4 flex-wrap">
+      <span><kbd class="border-token border rounded px-1">↑</kbd><kbd class="border-token border rounded px-1">↓</kbd> navigate</span>
+      <span><kbd class="border-token border rounded px-1">↵</kbd> open</span>
+      <span><kbd class="border-token border rounded px-1">esc</kbd> close</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  import Fuse from "fuse.js";
+
+  const overlay = document.getElementById("search-overlay")!;
+  const indexUrl = overlay.dataset.indexUrl!;
+  const input = document.getElementById("search-input");
+  const results = document.getElementById("search-results");
+  const empty = document.getElementById("search-empty");
+
+  let fuse = null;
+  let loaded = false;
+  let activeIndex = -1;
+  let current = [];
+
+  async function ensureIndex() {
+    if (loaded) return;
+    loaded = true;
+    try {
+      const res = await fetch(indexUrl);
+      const data = await res.json();
+      fuse = new Fuse(data, {
+        keys: [
+          { name: "title", weight: 3 },
+          { name: "kind", weight: 0.5 },
+          { name: "patterns", weight: 1.5 },
+          { name: "text", weight: 1 },
+        ],
+        threshold: 0.38,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+      });
+    } catch (e) {
+      console.error("search index failed", e);
+    }
+  }
+
+  function open() {
+    overlay.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    ensureIndex().then(() => {
+      input.focus();
+      if (input.value) run(input.value);
+    });
+    input.focus();
+  }
+  function close() {
+    overlay.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+
+  function badge(diff) {
+    if (!diff || diff === "Unknown") return "";
+    const cls = diff === "Easy" ? "badge-easy" : diff === "Medium" ? "badge-medium" : "badge-hard";
+    return `<span class="badge ${cls}">${diff}</span>`;
+  }
+
+  function render(items) {
+    current = items;
+    activeIndex = items.length ? 0 : -1;
+    results.innerHTML = items
+      .map(
+        (it, i) => `
+      <li role="option" aria-selected="${i === activeIndex}">
+        <a href="${it.url}" data-idx="${i}" class="flex items-center gap-2 px-3 py-2 rounded-lg ${i === activeIndex ? "surface-elev" : ""}">
+          <span class="text-xs muted w-16 shrink-0 uppercase tracking-wide">${it.kind}</span>
+          <span class="flex-1 truncate">${it.title}</span>
+          ${badge(it.difficulty)}
+        </a>
+      </li>`
+      )
+      .join("");
+    empty.classList.toggle("hidden", items.length > 0);
+  }
+
+  function run(q) {
+    if (!fuse || !q.trim()) {
+      render([]);
+      empty.classList.add("hidden");
+      return;
+    }
+    const hits = fuse.search(q.trim(), { limit: 20 }).map((h) => h.item);
+    render(hits);
+  }
+
+  function move(delta) {
+    if (!current.length) return;
+    activeIndex = (activeIndex + delta + current.length) % current.length;
+    [...results.querySelectorAll("li")].forEach((li, i) => {
+      li.setAttribute("aria-selected", String(i === activeIndex));
+      const a = li.querySelector("a");
+      a.classList.toggle("surface-elev", i === activeIndex);
+      if (i === activeIndex) a.scrollIntoView({ block: "nearest" });
+    });
+  }
+
+  input?.addEventListener("input", (e) => run(e.target.value));
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); move(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
+    else if (e.key === "Enter") {
+      const a = results.querySelector(`a[data-idx="${activeIndex}"]`);
+      if (a) window.location.href = a.getAttribute("href");
+    }
+  });
+
+  document.addEventListener("open-search", open);
+  document.getElementById("search-backdrop")?.addEventListener("click", close);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlay.classList.contains("hidden")) close();
+  });
+</script>

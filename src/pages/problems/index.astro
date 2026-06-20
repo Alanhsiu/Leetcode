@@ -1,0 +1,127 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProblemCard from "../../components/ProblemCard.astro";
+import { getProblems } from "../../lib/content";
+import { PATTERNS } from "../../lib/patterns";
+
+const problems = getProblems();
+const patterns = PATTERNS.filter((p) => problems.some((pr) => pr.patterns.includes(p.name)));
+---
+<BaseLayout title="Problems" wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">Problems</h1>
+    <p class="muted mt-1">{problems.length} C++ solutions — filter by pattern, difficulty, source, or your progress.</p>
+  </header>
+
+  <!-- Filter bar -->
+  <div class="surface rounded-xl p-3 sm:p-4 mb-6 sticky top-16 z-30 backdrop-blur" style="background: color-mix(in srgb, var(--bg-card) 92%, transparent);">
+    <div class="grid gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <input id="f-text" type="search" placeholder="Filter by title or number…" class="surface-elev border border-token rounded-lg px-3 py-2 text-sm" aria-label="Filter by text" />
+      <select id="f-difficulty" class="surface-elev border border-token rounded-lg px-3 py-2 text-sm" aria-label="Difficulty">
+        <option value="">All difficulties</option>
+        <option value="Easy">Easy</option>
+        <option value="Medium">Medium</option>
+        <option value="Hard">Hard</option>
+      </select>
+      <select id="f-pattern" class="surface-elev border border-token rounded-lg px-3 py-2 text-sm" aria-label="Pattern">
+        <option value="">All patterns</option>
+        {patterns.map((p) => <option value={p.slug}>{p.name}</option>)}
+      </select>
+      <select id="f-status" class="surface-elev border border-token rounded-lg px-3 py-2 text-sm" aria-label="Progress status">
+        <option value="">Any status</option>
+        <option value="none">Not started</option>
+        <option value="solved">Solved</option>
+        <option value="review">Needs review</option>
+        <option value="confident">Confident</option>
+      </select>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 mt-3 text-sm">
+      <label class="flex items-center gap-1.5"><input id="f-source-nc" type="checkbox" /> NeetCode 150 only</label>
+      <select id="f-sort" class="surface-elev border border-token rounded-lg px-2 py-1 text-xs" aria-label="Sort order">
+        <option value="number">Sort: number ↑</option>
+        <option value="number-desc">Sort: number ↓</option>
+        <option value="title">Sort: title A→Z</option>
+        <option value="difficulty">Sort: difficulty</option>
+      </select>
+      <button id="f-clear" class="viz-btn !px-2.5 !py-1 !text-xs">Clear</button>
+      <span class="ml-auto muted text-xs"><span id="f-count">{problems.length}</span> shown</span>
+    </div>
+  </div>
+
+  <div id="problem-grid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {problems.map((p) => <ProblemCard problem={p} />)}
+  </div>
+  <p id="no-results" class="hidden text-center muted py-12">No problems match these filters.</p>
+</BaseLayout>
+
+<script>
+  const grid = document.getElementById("problem-grid")!;
+  const cards = Array.from(grid.querySelectorAll<HTMLElement>("[data-problem]"));
+  const fText = document.getElementById("f-text") as HTMLInputElement;
+  const fDiff = document.getElementById("f-difficulty") as HTMLSelectElement;
+  const fPat = document.getElementById("f-pattern") as HTMLSelectElement;
+  const fStatus = document.getElementById("f-status") as HTMLSelectElement;
+  const fNc = document.getElementById("f-source-nc") as HTMLInputElement;
+  const fSort = document.getElementById("f-sort") as HTMLSelectElement;
+  const countEl = document.getElementById("f-count")!;
+  const noResults = document.getElementById("no-results")!;
+  const diffRank: Record<string, number> = { Easy: 0, Medium: 1, Hard: 2, Unknown: 3 };
+
+  function progress(): Record<string, string> {
+    try { return JSON.parse(localStorage.getItem("dsa-progress") || "{}"); } catch { return {}; }
+  }
+
+  function apply() {
+    const q = fText.value.trim().toLowerCase();
+    const diff = fDiff.value;
+    const pat = fPat.value;
+    const status = fStatus.value;
+    const ncOnly = fNc.checked;
+    const prog = progress();
+    let shown = 0;
+
+    for (const card of cards) {
+      const slug = card.dataset.slug!;
+      const st = prog[slug];
+      let ok = true;
+      if (q && !card.dataset.title!.includes(q)) ok = false;
+      if (diff && card.dataset.difficulty !== diff) ok = false;
+      if (pat && !card.dataset.pattern!.split(" ").includes(pat)) ok = false;
+      if (ncOnly && card.dataset.nc150 !== "true") ok = false;
+      if (status === "none" && st) ok = false;
+      if (status && status !== "none" && st !== status) ok = false;
+      card.style.display = ok ? "" : "none";
+      if (ok) shown++;
+    }
+    countEl.textContent = String(shown);
+    noResults.classList.toggle("hidden", shown > 0);
+  }
+
+  function sortCards() {
+    const mode = fSort.value;
+    const sorted = [...cards].sort((a, b) => {
+      const na = parseInt(a.dataset.title!), nb = parseInt(b.dataset.title!);
+      if (mode === "number") return na - nb;
+      if (mode === "number-desc") return nb - na;
+      if (mode === "title") return a.dataset.title!.localeCompare(b.dataset.title!);
+      if (mode === "difficulty") return (diffRank[a.dataset.difficulty!] - diffRank[b.dataset.difficulty!]) || na - nb;
+      return 0;
+    });
+    sorted.forEach((c) => grid.appendChild(c));
+  }
+
+  [fText, fDiff, fPat, fStatus, fNc].forEach((el) => el.addEventListener("input", apply));
+  fSort.addEventListener("change", () => { sortCards(); apply(); });
+  document.getElementById("f-clear")!.addEventListener("click", () => {
+    fText.value = ""; fDiff.value = ""; fPat.value = ""; fStatus.value = ""; fNc.checked = false;
+    apply();
+  });
+  document.addEventListener("progress-changed", apply);
+
+  // Support deep-linking ?pattern=slug & ?difficulty=
+  const params = new URLSearchParams(location.search);
+  if (params.get("pattern")) fPat.value = params.get("pattern")!;
+  if (params.get("difficulty")) fDiff.value = params.get("difficulty")!;
+  if (params.get("nc150")) fNc.checked = true;
+  apply();
+</script>

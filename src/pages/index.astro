@@ -1,0 +1,74 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { href } from "../lib/url";
+import { getStats } from "../lib/content";
+import { PATTERNS } from "../lib/patterns";
+import { getProblemsByPattern } from "../lib/content";
+
+const stats = getStats();
+const patternCards = PATTERNS.map((p) => ({
+  ...p,
+  count: getProblemsByPattern(p.name).length,
+}));
+---
+<BaseLayout wide>
+  <!-- Hero -->
+  <section class="text-center py-10 sm:py-16">
+    <p class="text-sm font-semibold uppercase tracking-widest" style="color: var(--accent);">Interview Prep</p>
+    <h1 class="mt-3 text-4xl sm:text-5xl font-extrabold tracking-tight">Data Structures &amp; Algorithms, visualized.</h1>
+    <p class="mt-4 max-w-2xl mx-auto muted text-lg">
+      My personal C++ solutions and cheat sheets — searchable, tagged by pattern, with interactive
+      animations so you can re-grok any algorithm in seconds.
+    </p>
+    <div class="mt-7 flex flex-wrap gap-3 justify-center">
+      <a href={href("/problems")} class="viz-btn !px-5 !py-2.5 !text-sm" style="background: var(--accent); color: #fff; border-color: var(--accent);">Browse problems →</a>
+      <a href={href("/visualizations")} class="viz-btn !px-5 !py-2.5 !text-sm">Watch visualizations</a>
+      <a href={href("/cram")} class="viz-btn !px-5 !py-2.5 !text-sm">Cram mode</a>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto">
+    {[
+      { label: "Solutions", value: stats.totalProblems },
+      { label: "NeetCode 150", value: `${stats.nc150Covered}/${stats.nc150Total}` },
+      { label: "Visualizations", value: 18 },
+      { label: "Cheat sheets", value: stats.cheatsheets + stats.reference },
+    ].map((s) => (
+      <div class="card p-4 text-center">
+        <div class="text-2xl sm:text-3xl font-extrabold" style="color: var(--accent);">{s.value}</div>
+        <div class="text-xs muted mt-1 uppercase tracking-wide">{s.label}</div>
+      </div>
+    ))}
+  </section>
+
+  <!-- Difficulty breakdown -->
+  <section class="mt-10 max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-3 text-sm">
+    <span class="badge badge-easy">Easy · {stats.byDifficulty.Easy}</span>
+    <span class="badge badge-medium">Medium · {stats.byDifficulty.Medium}</span>
+    <span class="badge badge-hard">Hard · {stats.byDifficulty.Hard}</span>
+    {stats.byDifficulty.Unknown > 0 && <span class="badge badge-tag">Other · {stats.byDifficulty.Unknown}</span>}
+  </section>
+
+  <!-- Patterns grid -->
+  <section class="mt-14">
+    <div class="flex items-baseline justify-between">
+      <h2 class="text-2xl font-bold">Browse by pattern</h2>
+      <a href={href("/patterns")} class="text-sm muted hover:text-[var(--accent)]">All patterns →</a>
+    </div>
+    <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {patternCards.map((p) => (
+        <a href={href(`/patterns/${p.slug}`)} class="card p-4 block">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold">{p.name}</h3>
+            <span class="badge badge-tag">{p.count}</span>
+          </div>
+          <p class="mt-1.5 text-sm muted line-clamp-2">{p.blurb}</p>
+          {p.vizIds.length > 0 && (
+            <p class="mt-2 text-xs" style="color: var(--accent);">▶ {p.vizIds.length} visualization{p.vizIds.length > 1 ? "s" : ""}</p>
+          )}
+        </a>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

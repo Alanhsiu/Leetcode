@@ -1,0 +1,116 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CodeBlock from "../../components/CodeBlock.astro";
+import DifficultyBadge from "../../components/DifficultyBadge.astro";
+import ProgressControls from "../../components/ProgressControls.astro";
+import { getProblems } from "../../lib/content";
+import { href, slugify } from "../../lib/url";
+import { CATEGORY_VIZ } from "../../lib/patterns";
+
+export function getStaticPaths() {
+  const problems = getProblems();
+  return problems.map((p, i) => ({
+    params: { slug: p.routeSlug },
+    props: {
+      problem: p,
+      prev: i > 0 ? problems[i - 1] : null,
+      next: i < problems.length - 1 ? problems[i + 1] : null,
+    },
+  }));
+}
+
+const { problem: p, prev, next } = Astro.props;
+const related = getProblems()
+  .filter((q) => q.routeSlug !== p.routeSlug && q.patterns.some((x) => p.patterns.includes(x)))
+  .slice(0, 6);
+const vizIds = p.patterns.flatMap((pat) => CATEGORY_VIZ[pat] ?? []);
+const sourceLabel = p.source === "neetcode" ? "NeetCode 150" : "Misc";
+---
+<BaseLayout title={`${p.number}. ${p.title}`} description={`C++ solution and notes for LeetCode ${p.number}. ${p.title} — pattern: ${p.patterns.join(", ")}.`}>
+  <nav class="text-sm muted mb-4">
+    <a href={href("/problems")} class="hover:text-[var(--accent)]">Problems</a>
+    <span class="mx-1">/</span>
+    <span>{p.number}. {p.title}</span>
+  </nav>
+
+  <header class="mb-6">
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-2xl sm:text-3xl font-bold">
+        <span class="muted font-mono">{p.number}.</span> {p.title}
+      </h1>
+      <DifficultyBadge difficulty={p.difficulty} />
+      {p.inNeetCode150 && <span class="badge badge-tag">NeetCode 150</span>}
+      {p.aiGenerated && <span class="badge badge-medium" title="Authored by AI — verify before trusting">⚠ AI-generated</span>}
+    </div>
+    <div class="flex flex-wrap items-center gap-1.5 mt-3 text-xs">
+      {p.patterns.map((pat) => (
+        <a href={href(`/patterns/${slugify(pat)}`)} class="badge badge-tag hover:text-[var(--accent)]">{pat}</a>
+      ))}
+      {p.timeComplexity && <span class="badge badge-complexity">Time {p.timeComplexity}</span>}
+      {p.spaceComplexity && <span class="badge badge-complexity">Space {p.spaceComplexity}</span>}
+    </div>
+    <div class="flex flex-wrap items-center gap-3 mt-4 text-sm">
+      <a href={p.leetcodeUrl} target="_blank" rel="noopener" class="viz-btn !text-xs">↗ Open on LeetCode</a>
+      <span class="muted text-xs">Source: {sourceLabel}</span>
+    </div>
+  </header>
+
+  <!-- Quick review -->
+  <section class="surface rounded-xl p-4 mb-6">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <h2 class="font-semibold text-sm uppercase tracking-wide muted">Quick review</h2>
+      <ProgressControls slug={p.routeSlug} size="sm" />
+    </div>
+    <dl class="grid sm:grid-cols-3 gap-3 mt-3 text-sm">
+      <div><dt class="muted text-xs uppercase">Pattern</dt><dd class="font-medium">{p.patterns.join(", ")}</dd></div>
+      <div><dt class="muted text-xs uppercase">Time</dt><dd class="font-mono">{p.timeComplexity ?? "—"}</dd></div>
+      <div><dt class="muted text-xs uppercase">Space</dt><dd class="font-mono">{p.spaceComplexity ?? "—"}</dd></div>
+    </dl>
+  </section>
+
+  {vizIds.length > 0 && (
+    <section class="mb-6" id="viz-embed">
+      <h2 class="font-semibold mb-2">Visualize the pattern</h2>
+      <div data-viz-mount={vizIds[0]}></div>
+    </section>
+  )}
+
+  <!-- Solution code -->
+  <section>
+    <h2 class="font-semibold mb-2">My solution <span class="muted font-normal text-sm">(C++)</span></h2>
+    <CodeBlock code={p.code} lang="cpp" />
+    <p class="muted text-xs mt-2">This is my own solution and notes. Problem statement © LeetCode — see the official link above.</p>
+  </section>
+
+  {related.length > 0 && (
+    <section class="mt-10">
+      <h2 class="font-semibold mb-3">Related — same pattern</h2>
+      <div class="grid gap-2 sm:grid-cols-2">
+        {related.map((r) => (
+          <a href={href(`/problems/${r.routeSlug}`)} class="card p-3 flex items-center gap-2 text-sm">
+            <span class="progress-dot muted" data-progress-indicator={r.routeSlug}>○</span>
+            <span class="flex-1"><span class="muted font-mono">{r.number}.</span> {r.title}</span>
+            <DifficultyBadge difficulty={r.difficulty} />
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- Prev / next -->
+  <nav class="flex justify-between gap-3 mt-10 pt-6 border-t border-token text-sm">
+    {prev ? (
+      <a href={href(`/problems/${prev.routeSlug}`)} class="viz-btn flex-1 !justify-start">← {prev.number}. {prev.title}</a>
+    ) : <span></span>}
+    {next ? (
+      <a href={href(`/problems/${next.routeSlug}`)} class="viz-btn flex-1 !justify-end text-right">{next.number}. {next.title} →</a>
+    ) : <span></span>}
+  </nav>
+</BaseLayout>
+
+<script>
+  import { mountViz } from "../../scripts/viz-loader.ts";
+  document.querySelectorAll<HTMLElement>("[data-viz-mount]").forEach((el) => {
+    mountViz(el, el.dataset.vizMount!);
+  });
+</script>

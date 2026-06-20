@@ -1,0 +1,15 @@
+---
+// Inlined, render-blocking script that applies the saved theme before paint
+// to avoid a flash of the wrong theme. Dark is the default.
+---
+<script is:inline>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      var dark = stored ? stored === "dark" : true; // default dark
+      document.documentElement.classList.toggle("dark", dark);
+    } catch (e) {
+      document.documentElement.classList.add("dark");
+    }
+  })();
+</script>

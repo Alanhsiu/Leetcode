@@ -1,0 +1,20 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { href } from "../../lib/url";
+import { getReference } from "../../lib/content";
+
+const refs = getReference();
+---
+<BaseLayout title="C++ Reference" wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">C++ STL Reference</h1>
+    <p class="muted mt-1">Quick-reference cards for the containers and idioms used across these solutions.</p>
+  </header>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {refs.map((r) => (
+      <a href={href(`/reference/${r.slug}`)} class="card p-4 block">
+        <h2 class="font-semibold font-mono">{r.title}</h2>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

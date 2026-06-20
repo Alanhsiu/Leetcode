@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { VISUALIZATIONS } from "../../lib/patterns";
+
+const groups = [...new Set(VISUALIZATIONS.map((v) => v.group))].map((group) => ({
+  group,
+  items: VISUALIZATIONS.filter((v) => v.group === group),
+}));
+---
+<BaseLayout title="Visualizations" description="Interactive, animated visualizations of the core data-structure & algorithm patterns, with play/pause/step controls." wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">Algorithm Visualizations</h1>
+    <p class="muted mt-1 max-w-2xl">Watch each pattern run. Use play / pause / step to control the animation, or step through manually. Animations respect your reduced-motion setting.</p>
+  </header>
+
+  <div class="grid gap-10">
+    {groups.map((g) => (
+      <section>
+        <h2 class="font-semibold text-lg mb-3">{g.group}</h2>
+        <div class="grid gap-6 lg:grid-cols-2">
+          {g.items.map((v) => (
+            <div id={v.id}>
+              <p class="text-sm mb-1.5"><strong>{v.title}</strong> <span class="muted">— {v.blurb}</span></p>
+              <div data-viz-mount={v.id}></div>
+            </div>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<script>
+  import { mountViz } from "../../scripts/viz-loader.ts";
+  document.querySelectorAll<HTMLElement>("[data-viz-mount]").forEach((el) => mountViz(el, el.dataset.vizMount!));
+</script>

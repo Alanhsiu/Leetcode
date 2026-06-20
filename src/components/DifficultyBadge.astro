@@ -1,0 +1,10 @@
+---
+interface Props { difficulty: string; }
+const { difficulty } = Astro.props;
+const cls =
+  difficulty === "Easy" ? "badge-easy"
+  : difficulty === "Medium" ? "badge-medium"
+  : difficulty === "Hard" ? "badge-hard"
+  : "badge-tag";
+---
+{difficulty !== "Unknown" && <span class:list={["badge", cls]}>{difficulty}</span>}

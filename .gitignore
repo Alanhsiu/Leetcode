@@ -1,0 +1,22 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# Astro / Vite
+.vercel/
+.netlify/
+
+# logs
+npm-debug.log*
+*.log
+
+# os
+.DS_Store
+
+# hugo blog build artifacts (legacy site, kept for reference)
+blog/public/
+blog/resources/
+blog/.hugo_build.lock

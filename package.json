@@ -1,0 +1,31 @@
+{
+  "name": "leetcode-prep-site",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "linkcheck": "node scripts/linkcheck.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.6.1",
+    "fuse.js": "^7.0.0",
+    "marked": "^15.0.7",
+    "shiki": "^1.29.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@tailwindcss/vite": "^4.0.9",
+    "tailwindcss": "^4.0.9",
+    "typescript": "^5.7.3"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild@0.27.7": true,
+    "sharp@0.34.5": true
+  }
+}

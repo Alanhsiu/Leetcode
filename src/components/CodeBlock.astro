@@ -1,0 +1,29 @@
+---
+import { highlightCode } from "../lib/highlight";
+interface Props { code: string; lang?: string; }
+const { code, lang = "cpp" } = Astro.props;
+const html = await highlightCode(code, lang);
+---
+<div class="code-block relative group">
+  <button
+    class="copy-btn viz-btn !px-2 !py-1 !text-xs absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+    type="button"
+    aria-label="Copy code"
+  >Copy</button>
+  <Fragment set:html={html} />
+</div>
+
+<script>
+  document.addEventListener("click", async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".copy-btn");
+    if (!btn) return;
+    const block = btn.closest(".code-block");
+    const code = block?.querySelector("code")?.textContent ?? "";
+    try {
+      await navigator.clipboard.writeText(code);
+      const prev = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => (btn.textContent = prev), 1200);
+    } catch {}
+  });
+</script>

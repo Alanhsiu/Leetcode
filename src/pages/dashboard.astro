@@ -1,0 +1,141 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { href } from "../lib/url";
+import { getProblems } from "../lib/content";
+
+const problems = getProblems().map((p) => ({
+  slug: p.routeSlug,
+  number: p.number,
+  title: p.title,
+  difficulty: p.difficulty,
+  pattern: p.patterns[0] ?? "Other",
+  url: href(`/problems/${p.routeSlug}`),
+}));
+---
+<BaseLayout title="Dashboard" wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">Progress Dashboard</h1>
+    <p class="muted mt-1">Your study progress, stored locally in this browser. Mark problems as solved, needs-review, or confident anywhere on the site.</p>
+  </header>
+
+  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+    {[
+      { id: "stat-solved", label: "Solved", cls: "status-solved" },
+      { id: "stat-confident", label: "Confident", cls: "status-confident" },
+      { id: "stat-review", label: "Needs review", cls: "status-review" },
+      { id: "stat-remaining", label: "Not started", cls: "muted" },
+    ].map((s) => (
+      <div class="card p-4 text-center">
+        <div id={s.id} class:list={["text-3xl font-extrabold", s.cls]}>0</div>
+        <div class="text-xs muted mt-1 uppercase tracking-wide">{s.label}</div>
+      </div>
+    ))}
+  </section>
+
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-semibold">Overall</h2>
+      <span class="text-sm muted"><span id="overall-pct">0</span>% touched of {problems.length}</span>
+    </div>
+    <div class="h-3 rounded-full surface-elev overflow-hidden flex">
+      <div id="bar-solved" class="h-full" style="width:0; background: var(--color-easy);"></div>
+      <div id="bar-confident" class="h-full" style="width:0; background: var(--color-brand-light);"></div>
+      <div id="bar-review" class="h-full" style="width:0; background: var(--color-medium);"></div>
+    </div>
+  </section>
+
+  <section class="grid lg:grid-cols-2 gap-8">
+    <div>
+      <h2 class="font-semibold mb-3">By pattern</h2>
+      <div id="by-pattern" class="grid gap-2 text-sm"></div>
+    </div>
+    <div>
+      <h2 class="font-semibold mb-3">Needs review</h2>
+      <ul id="review-list" class="grid gap-2 text-sm"></ul>
+      <p id="review-empty" class="muted text-sm hidden">Nothing flagged for review — nice.</p>
+    </div>
+  </section>
+
+  <section class="mt-10 pt-6 border-t border-token flex flex-wrap gap-3 items-center">
+    <button id="export-btn" class="viz-btn !text-sm">Export progress (JSON)</button>
+    <button id="reset-btn" class="viz-btn !text-sm">Reset all progress</button>
+    <span id="reset-msg" class="muted text-sm"></span>
+  </section>
+
+  <script type="application/json" id="problem-data" set:html={JSON.stringify(problems)}></script>
+</BaseLayout>
+
+<script>
+  type P = { slug: string; number: number; title: string; difficulty: string; pattern: string; url: string };
+  const data: P[] = JSON.parse(document.getElementById("problem-data")!.textContent || "[]");
+
+  function progress(): Record<string, string> {
+    try { return JSON.parse(localStorage.getItem("dsa-progress") || "{}"); } catch { return {}; }
+  }
+  const set = (id: string, v: string | number) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+
+  function render() {
+    const prog = progress();
+    let solved = 0, confident = 0, review = 0;
+    const byPattern: Record<string, { total: number; done: number }> = {};
+    const reviewItems: P[] = [];
+
+    for (const p of data) {
+      const st = prog[p.slug];
+      byPattern[p.pattern] ??= { total: 0, done: 0 };
+      byPattern[p.pattern].total++;
+      if (st === "solved") { solved++; byPattern[p.pattern].done++; }
+      else if (st === "confident") { confident++; byPattern[p.pattern].done++; }
+      else if (st === "review") { review++; reviewItems.push(p); }
+    }
+    const total = data.length;
+    const remaining = total - solved - confident - review;
+    set("stat-solved", solved);
+    set("stat-confident", confident);
+    set("stat-review", review);
+    set("stat-remaining", remaining);
+    set("overall-pct", Math.round(((solved + confident + review) / total) * 100));
+
+    (document.getElementById("bar-solved") as HTMLElement).style.width = `${(solved / total) * 100}%`;
+    (document.getElementById("bar-confident") as HTMLElement).style.width = `${(confident / total) * 100}%`;
+    (document.getElementById("bar-review") as HTMLElement).style.width = `${(review / total) * 100}%`;
+
+    const pat = document.getElementById("by-pattern")!;
+    pat.innerHTML = Object.entries(byPattern)
+      .sort((a, b) => b[1].done / b[1].total - a[1].done / a[1].total)
+      .map(([name, s]) => {
+        const pct = Math.round((s.done / s.total) * 100);
+        return `<div>
+          <div class="flex justify-between text-xs mb-1"><span>${name}</span><span class="muted">${s.done}/${s.total}</span></div>
+          <div class="h-1.5 rounded-full surface-elev overflow-hidden"><div class="h-full" style="width:${pct}%; background: var(--accent);"></div></div>
+        </div>`;
+      })
+      .join("");
+
+    const list = document.getElementById("review-list")!;
+    const empty = document.getElementById("review-empty")!;
+    empty.classList.toggle("hidden", reviewItems.length > 0);
+    list.innerHTML = reviewItems
+      .map((p) => `<li><a class="card p-2.5 flex items-center gap-2 hover:text-[var(--accent)]" href="${p.url}"><span class="status-review">↻</span><span class="muted font-mono">${p.number}.</span> ${p.title}</a></li>`)
+      .join("");
+  }
+
+  render();
+  document.addEventListener("progress-changed", render);
+
+  document.getElementById("export-btn")?.addEventListener("click", () => {
+    const blob = new Blob([localStorage.getItem("dsa-progress") || "{}"], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "dsa-progress.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  document.getElementById("reset-btn")?.addEventListener("click", () => {
+    if (!confirm("Reset all progress in this browser? This cannot be undone.")) return;
+    localStorage.removeItem("dsa-progress");
+    document.dispatchEvent(new CustomEvent("progress-changed", { detail: {} }));
+    set("reset-msg", "Progress cleared.");
+    render();
+  });
+</script>

@@ -1,0 +1,16 @@
+---
+interface Props { slug: string; size?: "sm" | "md"; }
+const { slug, size = "md" } = Astro.props;
+const pad = size === "sm" ? "!px-2 !py-1 !text-xs" : "";
+---
+<div class="flex flex-wrap gap-1.5" data-progress-slug={slug} role="group" aria-label="Mark progress">
+  <button class:list={["viz-btn", pad]} data-progress-set="solved" aria-pressed="false">
+    <span class="status-solved" aria-hidden="true">✓</span> Solved
+  </button>
+  <button class:list={["viz-btn", pad]} data-progress-set="review" aria-pressed="false">
+    <span class="status-review" aria-hidden="true">↻</span> Review
+  </button>
+  <button class:list={["viz-btn", pad]} data-progress-set="confident" aria-pressed="false">
+    <span class="status-confident" aria-hidden="true">★</span> Confident
+  </button>
+</div>

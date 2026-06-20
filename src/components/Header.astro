@@ -1,0 +1,92 @@
+---
+import { href } from "../lib/url";
+
+const nav = [
+  { label: "Problems", path: "/problems" },
+  { label: "NeetCode 150", path: "/neetcode150" },
+  { label: "Patterns", path: "/patterns" },
+  { label: "Visualizations", path: "/visualizations" },
+  { label: "Cheat Sheets", path: "/cheatsheets" },
+  { label: "Reference", path: "/reference" },
+  { label: "Cram", path: "/cram" },
+  { label: "Dashboard", path: "/dashboard" },
+];
+
+const current = Astro.url.pathname.replace(/\/$/, "");
+function isActive(path: string) {
+  const target = href(path).replace(/\/$/, "");
+  return current === target || current.startsWith(target + "/");
+}
+---
+
+<header class="sticky top-0 z-40 backdrop-blur border-b border-token" style="background: color-mix(in srgb, var(--bg) 85%, transparent);">
+  <div class="mx-auto max-w-7xl px-4 flex items-center gap-3 h-14">
+    <a href={href("/")} class="flex items-center gap-2 font-bold tracking-tight shrink-0">
+      <span class="inline-grid place-items-center w-7 h-7 rounded-md text-white text-sm" style="background: var(--accent);">{"</>"}</span>
+      <span class="hidden sm:inline">DSA Notes</span>
+    </a>
+
+    <nav class="hidden md:flex items-center gap-1 ml-2 text-sm overflow-x-auto" aria-label="Primary">
+      {nav.map((n) => (
+        <a
+          href={href(n.path)}
+          class:list={["px-2.5 py-1.5 rounded-md whitespace-nowrap hover:text-[var(--accent)]", isActive(n.path) && "text-[var(--accent)] font-semibold"]}
+          aria-current={isActive(n.path) ? "page" : undefined}
+        >{n.label}</a>
+      ))}
+    </nav>
+
+    <div class="flex items-center gap-1.5 ml-auto">
+      <button id="search-open" class="viz-btn !px-2.5" aria-label="Search (press /)" title="Search ( / )">
+        <span aria-hidden="true">🔍</span>
+        <span class="hidden lg:inline muted text-xs">Search</span>
+        <kbd class="hidden lg:inline text-[0.65rem] muted border-token border rounded px-1">/</kbd>
+      </button>
+      <button id="theme-toggle" class="viz-btn !px-2.5" aria-label="Toggle dark mode" title="Toggle theme">
+        <span class="dark:hidden" aria-hidden="true">🌙</span>
+        <span class="hidden dark:inline" aria-hidden="true">☀️</span>
+      </button>
+      <button id="mobile-menu-btn" class="viz-btn !px-2.5 md:hidden" aria-label="Open menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+
+  <!-- Mobile nav -->
+  <nav id="mobile-menu" class="md:hidden hidden border-t border-token px-4 py-2 flex-col gap-1 text-sm" aria-label="Mobile">
+    {nav.map((n) => (
+      <a href={href(n.path)} class:list={["block px-2 py-2 rounded-md", isActive(n.path) && "text-[var(--accent)] font-semibold"]}>{n.label}</a>
+    ))}
+  </nav>
+</header>
+
+<script>
+  // Theme toggle
+  const toggle = document.getElementById("theme-toggle");
+  toggle?.addEventListener("click", () => {
+    const isDark = document.documentElement.classList.toggle("dark");
+    try { localStorage.setItem("theme", isDark ? "dark" : "light"); } catch {}
+  });
+
+  // Mobile menu
+  const menuBtn = document.getElementById("mobile-menu-btn");
+  const menu = document.getElementById("mobile-menu");
+  menuBtn?.addEventListener("click", () => {
+    const open = menu?.classList.toggle("hidden");
+    menuBtn.setAttribute("aria-expanded", String(open === false));
+    if (menu && open === false) menu.style.display = "flex";
+    else if (menu) menu.style.display = "";
+  });
+
+  // Open search via the header button or the "/" key
+  function openSearch() {
+    document.dispatchEvent(new CustomEvent("open-search"));
+  }
+  document.getElementById("search-open")?.addEventListener("click", openSearch);
+  document.addEventListener("keydown", (e) => {
+    const t = e.target as HTMLElement;
+    const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+    if (e.key === "/" && !typing) {
+      e.preventDefault();
+      openSearch();
+    }
+  });
+</script>

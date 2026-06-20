@@ -1,0 +1,48 @@
+---
+import "../styles/global.css";
+import ThemeScript from "../components/ThemeScript.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import SearchOverlay from "../components/SearchOverlay.astro";
+import { href } from "../lib/url";
+
+interface Props {
+  title?: string;
+  description?: string;
+  wide?: boolean;
+}
+const {
+  title = "DSA Interview Notes",
+  description = "A fast, visual, searchable collection of data-structures & algorithms interview notes, NeetCode 150 coverage, and interactive algorithm visualizations.",
+  wide = false,
+} = Astro.props;
+
+const fullTitle = title === "DSA Interview Notes" ? title : `${title} · DSA Notes`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href={href("/favicon.svg")} type="image/svg+xml" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <ThemeScript />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <Header />
+    <main id="main" class:list={["mx-auto px-4 py-8", wide ? "max-w-7xl" : "max-w-5xl"]}>
+      <slot />
+    </main>
+    <Footer />
+    <SearchOverlay />
+    <script>
+      import "../scripts/progress.ts";
+    </script>
+  </body>
+</html>

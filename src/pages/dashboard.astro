@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { href } from "../lib/url";
 import { getProblems } from "../lib/content";
+import { getTrackViews, guideProgressId, guideSlug } from "../lib/learning";
 
 const problems = getProblems().map((p) => ({
   slug: p.routeSlug,
@@ -11,6 +12,16 @@ const problems = getProblems().map((p) => ({
   pattern: p.patterns[0] ?? "Other",
   url: href(`/problems/${p.routeSlug}`),
 }));
+
+const trackViews = await getTrackViews();
+const guides = trackViews.flatMap((t) =>
+  t.guides.map((g) => ({
+    slug: guideProgressId(g),
+    title: g.data.title,
+    track: t.meta.title,
+    url: href(`/learning/${t.meta.slug}/${guideSlug(g)}`),
+  })),
+);
 ---
 <BaseLayout title="Dashboard" wide>
   <header class="mb-6">
@@ -56,6 +67,16 @@ const problems = getProblems().map((p) => ({
     </div>
   </section>
 
+  {guides.length > 0 && (
+    <section class="mt-8">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="font-semibold">Learning</h2>
+        <span class="text-sm muted"><span id="learn-pct">0</span>% touched of {guides.length} guides</span>
+      </div>
+      <div id="by-track" class="grid gap-2 text-sm sm:grid-cols-2"></div>
+    </section>
+  )}
+
   <section class="mt-10 pt-6 border-t border-token flex flex-wrap gap-3 items-center">
     <button id="export-btn" class="viz-btn !text-sm">Export progress (JSON)</button>
     <button id="reset-btn" class="viz-btn !text-sm">Reset all progress</button>
@@ -63,11 +84,14 @@ const problems = getProblems().map((p) => ({
   </section>
 
   <script type="application/json" id="problem-data" set:html={JSON.stringify(problems)}></script>
+  <script type="application/json" id="learning-data" set:html={JSON.stringify(guides)}></script>
 </BaseLayout>
 
 <script>
   type P = { slug: string; number: number; title: string; difficulty: string; pattern: string; url: string };
   const data: P[] = JSON.parse(document.getElementById("problem-data")!.textContent || "[]");
+  type G = { slug: string; title: string; track: string; url: string };
+  const guides: G[] = JSON.parse(document.getElementById("learning-data")?.textContent || "[]");
 
   function progress(): Record<string, string> {
     try { return JSON.parse(localStorage.getItem("dsa-progress") || "{}"); } catch { return {}; }
@@ -118,6 +142,39 @@ const problems = getProblems().map((p) => ({
     list.innerHTML = reviewItems
       .map((p) => `<li><a class="card p-2.5 flex items-center gap-2 hover:text-[var(--accent)]" href="${p.url}"><span class="status-review">↻</span><span class="muted font-mono">${p.number}.</span> ${p.title}</a></li>`)
       .join("");
+
+    // Learning guides: per-track progress + fold guide reviews into the list.
+    if (guides.length) {
+      const byTrack: Record<string, { total: number; done: number }> = {};
+      let touched = 0;
+      const guideReviews: G[] = [];
+      for (const g of guides) {
+        const st = prog[g.slug];
+        byTrack[g.track] ??= { total: 0, done: 0 };
+        byTrack[g.track].total++;
+        if (st === "solved" || st === "confident") { byTrack[g.track].done++; touched++; }
+        else if (st === "review") { touched++; guideReviews.push(g); }
+      }
+      set("learn-pct", Math.round((touched / guides.length) * 100));
+      const bt = document.getElementById("by-track");
+      if (bt) {
+        bt.innerHTML = Object.entries(byTrack)
+          .map(([name, s]) => {
+            const pct = Math.round((s.done / s.total) * 100);
+            return `<div>
+              <div class="flex justify-between text-xs mb-1"><span>${name}</span><span class="muted">${s.done}/${s.total}</span></div>
+              <div class="h-1.5 rounded-full surface-elev overflow-hidden"><div class="h-full" style="width:${pct}%; background: var(--accent);"></div></div>
+            </div>`;
+          })
+          .join("");
+      }
+      if (guideReviews.length) {
+        list.innerHTML += guideReviews
+          .map((g) => `<li><a class="card p-2.5 flex items-center gap-2 hover:text-[var(--accent)]" href="${g.url}"><span class="status-review">↻</span><span class="badge badge-tag">${g.track}</span> ${g.title}</a></li>`)
+          .join("");
+        empty.classList.add("hidden");
+      }
+    }
   }
 
   render();

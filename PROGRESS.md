@@ -179,3 +179,15 @@ stays green; `main` untouched; the four content folders stay read-only.
   provider change (§D), the unverified auto-drivers + coverage (§E), and every
   AI-drafted guide with the official-docs to check against (§F).
 - Build 263 pages green; 10024 links / 0 broken; 14 guides indexed for search.
+
+## Phase 14 — Reuse polish across both content types (Part B.3) ✅
+- **Cram**: guides now appear in `/cram` under a "📚 Learning guides" section, grouped by
+  track, each collapsed to title/level/description/tags. They reuse the existing
+  `data-cram`/`data-slug` machinery, so the status filter, expand/collapse-all, count,
+  and empty-group hiding all work across problems **and** guides (204 cram cards total).
+- **Dashboard**: added a "Learning" panel with per-track progress bars and folded guide
+  "needs review" items into the review list — progress now spans both content types
+  (problems keep their own overall stats; guides get their own touched% + per-track bars).
+- Confirms the brief's shared surfaces (search, level badges, cram/quick-review,
+  progress, visualizations) work for guides as well as problems. Build 263 pages green;
+  10041 links / 0 broken.

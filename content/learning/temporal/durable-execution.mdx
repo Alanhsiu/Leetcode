@@ -1,0 +1,70 @@
+---
+title: What is Durable Execution?
+description: The core idea behind Temporal — code that you can crash and resume without losing state.
+level: Beginner
+order: 1
+tags: [concepts, durability]
+aiGenerated: true
+---
+
+import CodeRunner from "@/components/CodeRunner.astro";
+
+## The problem
+
+Distributed systems fail constantly: processes get OOM-killed, deploys restart
+pods, networks blip, downstream APIs time out. The hard part of a long-running
+process (an order saga, a provisioning pipeline, a payment flow) isn't the happy
+path — it's **resuming correctly after a failure** without double-charging,
+re-sending, or losing where you were.
+
+The traditional fix is to hand-roll a state machine plus a database: persist
+"step 3 done", add retry tables, write reconciliation jobs. It works, but the
+business logic drowns in plumbing.
+
+## The idea
+
+**Durable execution** flips this around: the _execution itself_ is persistent.
+You write a normal function; the platform records each step it takes to a durable
+**history**. If the worker dies, another worker **replays** that history to
+rebuild the exact in-memory state, then continues from the next unfinished step.
+
+For replay to be correct, workflow code must be **deterministic** — the same
+history must always produce the same decisions. So anything non-deterministic
+(wall-clock time, random numbers, network calls) is delegated to **activities**,
+whose _results_ are recorded in history rather than recomputed on replay.
+
+## A tiny illustration
+
+This isn't Temporal (that needs a server + worker) — it's plain Python showing the
+shape of the problem durable execution solves: a flaky step that must be retried
+with backoff until it succeeds. Edit it and press **Run**.
+
+<CodeRunner
+  language="python"
+  code={`import itertools
+
+# Simulate a step that fails twice, then succeeds.
+attempts = itertools.count(1)
+
+def flaky_charge():
+    n = next(attempts)
+    if n < 3:
+        raise RuntimeError(f"attempt {n}: payment gateway timeout")
+    return f"charged on attempt {n}"
+
+# A naive retry loop. Temporal gives you this (and durable resume) for free,
+# configured via a RetryPolicy instead of hand-written loops.
+delay = 1
+for _ in range(5):
+    try:
+        print(flaky_charge()); break
+    except RuntimeError as e:
+        print("retrying after", delay, "s ->", e)
+        delay *= 2
+`}
+/>
+
+In Temporal you would not write that loop at all: you call the activity, attach a
+`RetryPolicy`, and the platform retries with backoff **and** survives a worker
+crash between attempts. The next guides cover the building blocks that make that
+possible.

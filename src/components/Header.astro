@@ -13,6 +13,12 @@ const nav = [
   { label: "Dashboard", path: "/dashboard" },
 ];
 
+// Top-level sections. "Coding Interview" is the existing material (above);
+// "Learning" is the new multi-track platform.
+const sections = [
+  { label: "Learning", path: "/learning" },
+];
+
 const current = Astro.url.pathname.replace(/\/$/, "");
 function isActive(path: string) {
   const target = href(path).replace(/\/$/, "");
@@ -32,6 +38,14 @@ function isActive(path: string) {
         <a
           href={href(n.path)}
           class:list={["px-2.5 py-1.5 rounded-md whitespace-nowrap hover:text-[var(--accent)]", isActive(n.path) && "text-[var(--accent)] font-semibold"]}
+          aria-current={isActive(n.path) ? "page" : undefined}
+        >{n.label}</a>
+      ))}
+      <span class="mx-1 w-px h-5 self-center" style="background: var(--border);" aria-hidden="true"></span>
+      {sections.map((n) => (
+        <a
+          href={href(n.path)}
+          class:list={["px-2.5 py-1.5 rounded-md whitespace-nowrap font-semibold hover:text-[var(--accent)]", isActive(n.path) && "text-[var(--accent)]"]}
           aria-current={isActive(n.path) ? "page" : undefined}
         >{n.label}</a>
       ))}
@@ -55,6 +69,10 @@ function isActive(path: string) {
   <nav id="mobile-menu" class="md:hidden hidden border-t border-token px-4 py-2 flex-col gap-1 text-sm" aria-label="Mobile">
     {nav.map((n) => (
       <a href={href(n.path)} class:list={["block px-2 py-2 rounded-md", isActive(n.path) && "text-[var(--accent)] font-semibold"]}>{n.label}</a>
+    ))}
+    <span class="my-1 h-px" style="background: var(--border);" aria-hidden="true"></span>
+    {sections.map((n) => (
+      <a href={href(n.path)} class:list={["block px-2 py-2 rounded-md font-semibold", isActive(n.path) && "text-[var(--accent)]"]}>{n.label}</a>
     ))}
   </nav>
 </header>

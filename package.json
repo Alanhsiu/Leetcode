@@ -15,6 +15,7 @@
     "driver-test": "node --experimental-strip-types scripts/driver-test.mjs"
   },
   "dependencies": {
+    "@astrojs/mdx": "^4.3.14",
     "@codemirror/lang-cpp": "^6.0.3",
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/lang-python": "^6.2.1",

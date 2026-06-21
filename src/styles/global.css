@@ -145,6 +145,16 @@ html.dark .shiki, html.dark .shiki span {
   font-style: var(--shiki-dark-font-style) !important;
 }
 
+/* Astro-rendered markdown (guides) emit `.astro-code`; normalize its background to
+   our token and swap to the dark Shiki theme in dark mode. */
+.astro-code { background-color: var(--code-bg) !important; }
+html.dark .astro-code, html.dark .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: transparent !important;
+  font-style: var(--shiki-dark-font-style) !important;
+}
+html.dark .astro-code { background-color: var(--code-bg) !important; }
+
 /* ---- Prose (rendered markdown) ---- */
 .prose { max-width: 72ch; line-height: 1.7; }
 .prose h1, .prose h2, .prose h3, .prose h4 { font-weight: 700; line-height: 1.25; scroll-margin-top: 5rem; }

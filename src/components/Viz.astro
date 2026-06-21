@@ -1,0 +1,25 @@
+---
+// Embed an interactive visualization inside a guide (MDX). Reuses the same
+// lazy viz-loader as problem/pattern pages. Usage in MDX: <Viz id="dijkstra" />
+import { VIZ_IDS } from "../lib/patterns";
+interface Props { id: string; caption?: string; }
+const { id, caption } = Astro.props;
+const known = VIZ_IDS.has(id);
+---
+{known ? (
+  <figure class="my-5">
+    <div data-viz-mount={id}></div>
+    {caption && <figcaption class="muted text-sm mt-1">{caption}</figcaption>}
+  </figure>
+) : (
+  <p class="muted text-sm">[unknown visualization: {id}]</p>
+)}
+
+<script>
+  import { mountViz } from "../scripts/viz-loader.ts";
+  document.querySelectorAll<HTMLElement>("[data-viz-mount]").forEach((el) => {
+    if (el.dataset.vizReady) return;
+    el.dataset.vizReady = "1";
+    mountViz(el, el.dataset.vizMount!);
+  });
+</script>

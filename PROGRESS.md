@@ -145,3 +145,23 @@ stays green; `main` untouched; the four content folders stay read-only.
   `package.json` + `ci.yml`.
 - Problem pages gained a collapsible **"▶ Run it"** `<CodeRunner>` (solution + driver),
   lazy-mounted on open. Build 245 pages green; 8988 links / 0 broken.
+
+## Phase 12 — Learning platform core (Part B.1) ✅
+- New content type **guide** via Astro 5 **Content Layer** (`src/content.config.ts`,
+  `glob` over `content/learning/**/*.{md,mdx}`, zod-validated frontmatter). Added
+  `@astrojs/mdx` (v4, Astro-5 compatible) + dual-theme Shiki so guide code blocks match
+  the site; `@/*` tsconfig alias for component imports from content.
+- `src/data/tracks.ts` (track registry + humanized-folder fallback) and
+  `src/lib/learning.ts` (groups guides into tracks, derives track from folder, treats
+  `<track>/index.md` as the landing). Zero-wiring: drop a file → guide appears; drop a
+  folder → new track.
+- Routes: `/learning` (hub), `/learning/<track>` (landing + auto outline/TOC),
+  `/learning/<track>/<guide>` (rendered guide + prev/next). **Learning** added as a
+  distinct top-level nav section beside the existing Coding-Interview items.
+- Reuse wiring: `LevelBadge` (reuses badge palette), `Viz` (embed any visualization in a
+  guide via the same lazy loader), guides added to `/search-index.json`, progress
+  tracking via slug-keyed `progress.ts` (`guide/<id>` keys) + dots on track outlines.
+- Seed content (all `aiGenerated: true`): Temporal/Mender/GCP landings + one starter
+  guide each; the Temporal guide is `.mdx` and embeds a `<CodeRunner>` (Python) to prove
+  component-in-guide works; the GCP guide uses read-only `gcloud` blocks (no fake runs).
+- Build 252 pages green; 9679 links / 0 broken; typecheck clean.

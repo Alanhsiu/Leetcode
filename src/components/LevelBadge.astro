@@ -1,0 +1,12 @@
+---
+// Difficulty/level badge for guides — reuses the same badge palette as problems
+// (Beginner≈Easy, Intermediate≈Medium, Advanced≈Hard).
+interface Props { level?: string; }
+const { level } = Astro.props;
+const cls =
+  level === "Beginner" ? "badge-easy"
+  : level === "Intermediate" ? "badge-medium"
+  : level === "Advanced" ? "badge-hard"
+  : "badge-tag";
+---
+{level && <span class:list={["badge", cls]}>{level}</span>}

@@ -1,0 +1,41 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { href } from "../../lib/url";
+import { getTrackViews } from "../../lib/learning";
+
+const tracks = await getTrackViews();
+const totalGuides = tracks.reduce((n, t) => n + t.guides.length, 0);
+---
+<BaseLayout title="Learning" description="Hands-on learning tracks beyond coding interviews: Temporal, Mender OTA, and Google Cloud." wide>
+  <header class="mb-8">
+    <p class="text-sm font-semibold uppercase tracking-widest" style="color: var(--accent);">Learning</p>
+    <h1 class="mt-2 text-3xl sm:text-4xl font-bold">Learning tracks</h1>
+    <p class="mt-3 muted max-w-2xl">
+      Concept-first guides for tools and platforms I work with — separate from the coding-interview
+      material. Each track has an outline and short starter guides; runnable snippets use the same
+      in-page runner as the <a class="underline" href={href("/playground")}>playground</a>.
+    </p>
+    <p class="mt-3 text-xs muted">{tracks.length} tracks · {totalGuides} guides</p>
+  </header>
+
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {tracks.map((t) => (
+      <a href={href(`/learning/${t.meta.slug}`)} class="card p-5 block">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl" aria-hidden="true">{t.meta.icon}</span>
+          <h2 class="font-semibold text-lg">{t.meta.title}</h2>
+          <span class="badge badge-tag ml-auto">{t.guides.length} guides</span>
+        </div>
+        <p class="mt-2 text-sm muted">{t.meta.blurb}</p>
+        {t.aiGenerated && (
+          <p class="mt-3 text-xs badge badge-medium" title="Contains AI-drafted content to verify">⚠ AI-drafted</p>
+        )}
+      </a>
+    ))}
+  </div>
+
+  <p class="muted text-xs mt-8">
+    Adding a track is zero-config: drop a folder under <code>content/learning/</code> with an
+    <code>index.md</code> and some <code>.md</code>/<code>.mdx</code> guides — it appears here automatically.
+  </p>
+</BaseLayout>

@@ -12,9 +12,8 @@ if a worker process crashes mid-execution, the workflow resumes exactly where it
 left off — with its local variables, call stack, and pending timers intact —
 because Temporal persists every step to a history and replays it deterministically.
 
-This track is a concept-first tour. It is **AI-drafted** and not yet verified — treat
-it as a study outline and confirm specifics against the
-[official Temporal docs](https://docs.temporal.io/).
+This track is a concept-first tour — treat it as a study outline and confirm
+specifics against the [official Temporal docs](https://docs.temporal.io/).
 
 ### What you'll learn
 - Why "durable execution" exists and what problem it solves.

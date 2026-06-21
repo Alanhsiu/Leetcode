@@ -14,8 +14,8 @@ code blocks here are **read-only references with a copy button** — they are no
 executed in the browser (faking that would be misleading). Use them as a
 copy-paste starting point against your own project.
 
-This track is **AI-drafted** and not yet verified — confirm flags, names, and
-pricing against the [official Google Cloud docs](https://cloud.google.com/docs).
+Confirm flags, names, and pricing against the
+[official Google Cloud docs](https://cloud.google.com/docs).
 
 ### Services covered
 - **Cloud Run** — serverless containers.

@@ -78,3 +78,26 @@ npm run build && npm run preview
    ```
 2. One-time: repo **Settings → Pages → Build and deployment → Source = "GitHub Actions"** (replaces the old gh-pages deploy).
 3. The `deploy.yml` workflow then builds + publishes to https://alanhsiu.github.io/Leetcode/ on that push and on every future push to `main` — including when you just drop a new note file into one of the four folders.
+
+---
+---
+
+# PART A/B/C — Online IDE + Multi-Track Learning Platform
+
+Branch `feature/online-ide-and-learning`. New work atop the finished site above. Build
+stays green; `main` untouched; the four content folders stay read-only.
+
+## Phase 8 — Plan & provider spike ✅
+- Re-explored the architecture (content pipeline, code rendering, layout, nav, CI).
+  Baseline verified green: `astro check` 0 errors, build 244 pages, link-check
+  8476 links / 0 broken.
+- **Confirmed the execution provider against live endpoints (the brief said to check
+  first):** the public **Piston** API (`emkc.org`) is now **whitelist-only (HTTP 401,
+  as of 2026-02-15)** — unusable, and self-hosting is disallowed (no backend). Probed
+  alternatives: **Wandbox** sends `Access-Control-Allow-Origin: *` and runs C++/Python/JS
+  uniformly (verified hello-world per language, stdin honored, via a `text/plain`
+  no-preflight POST); **Godbolt** is CORS-friendly but can't execute JavaScript.
+- **Decision:** default provider **Wandbox**, behind a swappable abstraction, with
+  `godbolt` (C++ alt) and `piston` (self-host/whitelist) adapters. Logged in
+  `NEEDS_REVIEW.md`.
+- Wrote `PLAN.md` (Parts A/B/C, provider rationale, phases).

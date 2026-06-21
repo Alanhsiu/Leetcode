@@ -9,6 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "note": "node scripts/new-note.mjs",
+    "publish": "node scripts/publish.mjs",
     "linkcheck": "node scripts/linkcheck.mjs",
     "viz-test": "node --experimental-strip-types scripts/viz-smoke.mjs",
     "runner-test": "node --experimental-strip-types scripts/runner-test.mjs",

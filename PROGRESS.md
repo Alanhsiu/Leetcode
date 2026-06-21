@@ -101,3 +101,27 @@ stays green; `main` untouched; the four content folders stay read-only.
   `godbolt` (C++ alt) and `piston` (self-host/whitelist) adapters. Logged in
   `NEEDS_REVIEW.md`.
 - Wrote `PLAN.md` (Parts A/B/C, provider rationale, phases).
+
+## Phase 9 — Code-runner core (Part A.1) ✅
+- `src/lib/runner.ts`: one public `runCode({ language, version?, files, stdin? })`
+  behind a `Provider` interface. Adapters: **wandbox** (default), **piston**
+  (configurable `PISTON_BASE` for self-host/whitelist). Backend swap = edit the one
+  `RUNNER` config object. Normalized `RunResult` (stdout/stderr/exit/signal/compile
+  message/elapsed); typed `RunnerError` + `friendlyError()`; 45s abort timeout.
+  Wandbox calls use `Content-Type: text/plain` to avoid a CORS preflight.
+- `scripts/runner-test.mjs`: 10 hermetic tests (mocked `fetch`) covering request
+  shaping (compiler ids, options, stdin), result normalization, error mapping, and a
+  provider swap. Wired into `package.json` + `ci.yml`. CI never calls the real API.
+
+## Phase 10 — `<CodeRunner>` + CodeMirror 6 (Part A.2) ✅
+- `src/components/CodeRunner.astro`: editor + optional stdin + Run/Reset + output pane
+  (stdout / stderr / compiler messages / exit code / elapsed / provider). A `<textarea>`
+  is the no-JS fallback, progressively enhanced to **CodeMirror 6**, which is lazy
+  `import()`-ed (a 636K chunk that loads only when an editor first scrolls into view —
+  collapsed playgrounds don't pay for it). Theme-synced to the site toggle, debounced
+  (Run disabled in-flight), `aria-live` output, ⌘/Ctrl+↵ to run. Chose CodeMirror over
+  Monaco: ~10× smaller, tree-shakeable, no worker/CDN — right for a static island.
+- `src/scripts/code-editor.ts`: thin CM6 factory (lang modes for cpp/python/js, one-dark
+  in dark mode, run keybinding).
+- `/playground` page with C++/Python/JS runners (added to nav). Build 245 pages green;
+  8988 links / 0 broken; CodeMirror confirmed code-split out of the global bundle.

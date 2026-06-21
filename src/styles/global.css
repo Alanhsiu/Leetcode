@@ -248,6 +248,57 @@ html.dark .shiki, html.dark .shiki span {
 .viz-progress { flex: 1; min-width: 80px; accent-color: var(--accent); cursor: pointer; }
 .viz-speed { min-width: 3.2rem; }
 
+/* ---- Code runner (in-page IDE) ---- */
+.code-runner-editor { background: var(--code-bg); }
+.code-runner-textarea {
+  width: 100%;
+  display: block;
+  background: var(--code-bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.6;
+  padding: 0.85rem 1rem;
+  border: none;
+  outline: none;
+  resize: vertical;
+  tab-size: 4;
+}
+.code-runner-stdin {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.7rem;
+}
+/* CodeMirror sits inside the same code-bg surface once it mounts. */
+.code-runner-editor .cm-editor { background: var(--code-bg); }
+.code-runner-editor .cm-editor.cm-focused { outline: none; }
+.code-runner-output-region { display: grid; gap: 0.7rem; }
+.code-runner-section { display: block; }
+.code-runner-tag {
+  display: inline-block;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; margin-bottom: 0.25rem;
+}
+.code-runner-tag.green { color: var(--color-easy); }
+.code-runner-tag.red { color: var(--color-hard); }
+.code-runner-tag.amber { color: var(--color-medium); }
+.code-runner-tag.muted { color: var(--text-muted); }
+.code-runner-pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 22rem;
+  overflow: auto;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  padding: 0.6rem 0.8rem;
+}
+
 /* Screen-reader only */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;

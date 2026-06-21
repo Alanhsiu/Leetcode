@@ -14,7 +14,12 @@
     "runner-test": "node --experimental-strip-types scripts/runner-test.mjs"
   },
   "dependencies": {
+    "@codemirror/lang-cpp": "^6.0.3",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/theme-one-dark": "^6.1.3",
     "astro": "^5.6.1",
+    "codemirror": "^6.0.2",
     "fuse.js": "^7.0.0",
     "marked": "^15.0.7",
     "shiki": "^1.29.2"

@@ -1,0 +1,58 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import CodeRunner from "../components/CodeRunner.astro";
+
+const cppStarter = `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // Reads two ints from stdin and prints their sum.
+    int a, b;
+    if (cin >> a >> b) cout << a << " + " << b << " = " << (a + b) << "\\n";
+    cout << "C++ is running in your browser \\u2728\\n";
+    return 0;
+}
+`;
+
+const pyStarter = `# Sums the whitespace-separated numbers piped in on stdin.
+import sys
+
+nums = [int(x) for x in sys.stdin.read().split()]
+print("sum =", sum(nums))
+print("squares =", [n * n for n in nums])
+`;
+
+const jsStarter = `// Pure Node.js — no stdin needed here.
+const fib = (n) => (n < 2 ? n : fib(n - 1) + fib(n - 2));
+console.log("fib(0..10) =", Array.from({ length: 11 }, (_, i) => fib(i)).join(", "));
+`;
+---
+
+<BaseLayout title="Playground" description="Run C++, Python, and JavaScript in your browser — a scratchpad backed by a free public sandbox." wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-bold">Playground</h1>
+    <p class="muted mt-1 max-w-2xl">
+      A scratchpad for C++, Python, and JavaScript. Edit the code, add input if you like, and hit
+      <strong>Run</strong> (or <kbd class="border-token border rounded px-1 text-xs">⌘/Ctrl</kbd>+<kbd class="border-token border rounded px-1 text-xs">↵</kbd>).
+      Code executes in a free public sandbox — the same runner powers the
+      <span class="font-medium">Run it</span> playgrounds on problem pages and in the learning tracks.
+    </p>
+  </header>
+
+  <div class="grid gap-6">
+    <section>
+      <h2 class="font-semibold mb-2">C++ <span class="muted font-normal text-sm">— try input <code>3 4</code></span></h2>
+      <CodeRunner code={cppStarter} language="cpp" stdin={"3 4"} showStdin />
+    </section>
+
+    <section>
+      <h2 class="font-semibold mb-2">Python <span class="muted font-normal text-sm">— try input <code>1 2 3 4 5</code></span></h2>
+      <CodeRunner code={pyStarter} language="python" stdin={"1 2 3 4 5"} showStdin />
+    </section>
+
+    <section>
+      <h2 class="font-semibold mb-2">JavaScript</h2>
+      <CodeRunner code={jsStarter} language="javascript" />
+    </section>
+  </div>
+</BaseLayout>

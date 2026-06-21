@@ -1,0 +1,229 @@
+---
+// Reusable in-page code runner: editable code (CodeMirror 6, progressively
+// enhanced from a <textarea>) + optional stdin + Run/Reset + an output pane
+// (stdout / stderr / compiler messages / exit code / elapsed time). Executes via
+// the abstracted runCode() client (src/lib/runner.ts) — default backend Wandbox.
+import { LANGUAGE_LABELS, SANDBOX_NOTE, type RunnerLanguage } from "../lib/runner";
+
+interface Props {
+  code: string;
+  language: RunnerLanguage;
+  stdin?: string;
+  /** Source file name sent to the backend (affects compiler diagnostics). */
+  filename?: string;
+  /** Extra caption, e.g. an "auto-generated driver — unverified" warning. */
+  note?: string;
+  /** Force the stdin box open initially. */
+  showStdin?: boolean;
+}
+
+const { code, language, stdin = "", filename, note, showStdin = false } = Astro.props;
+const ext = language === "cpp" ? "cpp" : language === "python" ? "py" : "js";
+const file = filename ?? `main.${ext}`;
+const label = LANGUAGE_LABELS[language];
+const stdinOpen = showStdin || stdin.trim().length > 0;
+---
+
+<div class="code-runner surface rounded-xl overflow-hidden" data-code-runner data-language={language} data-filename={file}>
+  <div class="flex items-center gap-2 px-3 py-2 border-b border-token surface-elev text-sm flex-wrap">
+    <span class="font-semibold">{label}</span>
+    <span class="badge badge-complexity" title="This snippet runs in a sandbox">▶ Runnable</span>
+    {note && <span class="muted text-xs">{note}</span>}
+    <div class="ml-auto flex items-center gap-1.5">
+      <button class="viz-btn !text-xs" type="button" data-runner-stdin-toggle aria-expanded={stdinOpen ? "true" : "false"}>
+        stdin
+      </button>
+      <button class="viz-btn !text-xs" type="button" data-runner-reset>Reset</button>
+      <button
+        class="viz-btn !text-xs"
+        type="button"
+        data-runner-run
+        style="background: var(--accent); color: #fff; border-color: var(--accent);"
+      >▶ Run</button>
+    </div>
+  </div>
+
+  <div class="code-runner-editor" data-runner-editor>
+    <textarea
+      class="code-runner-textarea"
+      data-runner-code
+      spellcheck="false"
+      autocomplete="off"
+      autocapitalize="off"
+      autocorrect="off"
+      aria-label={`Code editor (${label})`}
+      rows="12"
+    >{code}</textarea>
+  </div>
+
+  <div class:list={["px-3 py-2 border-t border-token", !stdinOpen && "hidden"]} data-runner-stdin-wrap>
+    <label class="block muted text-xs uppercase tracking-wide mb-1" for={`stdin-${file}`}>Input (stdin)</label>
+    <textarea
+      class="code-runner-textarea code-runner-stdin"
+      data-runner-stdin
+      spellcheck="false"
+      aria-label="Standard input"
+      rows="2"
+    >{stdin}</textarea>
+  </div>
+
+  <div class="border-t border-token hidden" data-runner-output-wrap>
+    <div class="flex items-center gap-2 px-3 py-1.5 text-xs surface-elev flex-wrap" data-runner-status></div>
+    <div class="px-3 py-2 code-runner-output-region" role="region" aria-live="polite" aria-label="Program output" data-runner-output></div>
+  </div>
+
+  <p class="px-3 py-1.5 muted text-xs border-t border-token">{SANDBOX_NOTE}</p>
+</div>
+
+<script>
+  import { runCode, friendlyError, type RunnerLanguage, type RunResult } from "../lib/runner";
+  import type { Editor } from "../scripts/code-editor";
+
+  function setupRunner(root: HTMLElement) {
+    const language = root.dataset.language as RunnerLanguage;
+    const filename = root.dataset.filename || "main.txt";
+    const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+
+    const codeArea = $<HTMLTextAreaElement>("[data-runner-code]");
+    const stdinArea = $<HTMLTextAreaElement>("[data-runner-stdin]");
+    const stdinWrap = $("[data-runner-stdin-wrap]");
+    const stdinToggle = $<HTMLButtonElement>("[data-runner-stdin-toggle]");
+    const runBtn = $<HTMLButtonElement>("[data-runner-run]");
+    const resetBtn = $<HTMLButtonElement>("[data-runner-reset]");
+    const outWrap = $("[data-runner-output-wrap]");
+    const outEl = $("[data-runner-output]");
+    const statusEl = $("[data-runner-status]");
+
+    const initialCode = codeArea.value;
+    const initialStdin = stdinArea.value;
+    let editor: Editor | null = null;
+    let mounted = false;
+    let running = false;
+
+    const isDark = () => document.documentElement.classList.contains("dark");
+    const getCode = () => (editor ? editor.getValue() : codeArea.value);
+    const setCode = (v: string) => (editor ? editor.setValue(v) : (codeArea.value = v));
+
+    async function mountEditor() {
+      if (mounted) return;
+      mounted = true;
+      try {
+        const { createEditor } = await import("../scripts/code-editor");
+        const doc = codeArea.value; // preserve any pre-mount edits
+        const host = document.createElement("div");
+        codeArea.style.display = "none";
+        codeArea.insertAdjacentElement("afterend", host);
+        editor = createEditor({ parent: host, doc, language, dark: isDark(), onRun: run });
+      } catch {
+        mounted = false; // keep the textarea fallback
+      }
+    }
+
+    // Mount CodeMirror when the runner first becomes visible (so collapsed
+    // playgrounds in <details> don't pay for it until opened), and on focus.
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            mountEditor();
+            io.disconnect();
+          }
+        }
+      });
+      io.observe(root);
+    }
+    codeArea.addEventListener("focus", mountEditor, { once: true });
+
+    // Keep CodeMirror's theme in sync with the site theme toggle.
+    new MutationObserver(() => editor?.setDark(isDark())).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    stdinToggle.addEventListener("click", () => {
+      const nowHidden = stdinWrap.classList.toggle("hidden");
+      stdinToggle.setAttribute("aria-expanded", String(!nowHidden));
+      if (!nowHidden) stdinArea.focus();
+    });
+
+    function setRunning(on: boolean) {
+      running = on;
+      runBtn.disabled = on;
+      runBtn.textContent = on ? "Running…" : "▶ Run";
+    }
+
+    function chip(text: string, cls = "") {
+      const s = document.createElement("span");
+      s.className = `badge ${cls}`.trim();
+      s.textContent = text;
+      return s;
+    }
+
+    function section(label: string, text: string, cls: string) {
+      const wrap = document.createElement("div");
+      wrap.className = "code-runner-section";
+      const tag = document.createElement("span");
+      tag.className = `code-runner-tag ${cls}`;
+      tag.textContent = label;
+      const pre = document.createElement("pre");
+      pre.className = "code-runner-pre";
+      pre.textContent = text;
+      wrap.append(tag, pre);
+      return wrap;
+    }
+
+    function renderResult(res: RunResult) {
+      statusEl.replaceChildren();
+      const exit = res.exitCode;
+      statusEl.append(
+        chip(
+          exit === 0 ? "✓ Exit 0" : `✗ Exit ${exit ?? "—"}`,
+          exit === 0 ? "badge-easy" : "badge-hard",
+        ),
+      );
+      if (res.signal) statusEl.append(chip(`signal ${res.signal}`, "badge-medium"));
+      statusEl.append(chip(`${(res.timeMs / 1000).toFixed(1)}s elapsed`, "badge-tag"));
+      statusEl.append(chip(res.provider, "badge-tag"));
+
+      outEl.replaceChildren();
+      if (res.compileMessage) outEl.append(section("Compiler", res.compileMessage, "amber"));
+      if (res.stdout) outEl.append(section("stdout", res.stdout, "green"));
+      if (res.stderr) outEl.append(section("stderr", res.stderr, "red"));
+      if (!res.compileMessage && !res.stdout && !res.stderr) {
+        outEl.append(section("output", "(no output)", "muted"));
+      }
+    }
+
+    async function run() {
+      if (running) return;
+      const code = getCode();
+      if (!code.trim()) return;
+      setRunning(true);
+      outWrap.classList.remove("hidden");
+      statusEl.replaceChildren(chip("Running in sandbox…", "badge-tag"));
+      outEl.replaceChildren();
+      try {
+        const res = await runCode({
+          language,
+          files: [{ name: filename, content: code }],
+          stdin: stdinArea.value,
+        });
+        renderResult(res);
+      } catch (e) {
+        statusEl.replaceChildren(chip("✗ Error", "badge-hard"));
+        outEl.replaceChildren(section("error", friendlyError(e), "red"));
+      } finally {
+        setRunning(false);
+      }
+    }
+
+    runBtn.addEventListener("click", run);
+    resetBtn.addEventListener("click", () => {
+      setCode(initialCode);
+      stdinArea.value = initialStdin;
+      outWrap.classList.add("hidden");
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-code-runner]").forEach(setupRunner);
+</script>

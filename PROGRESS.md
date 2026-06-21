@@ -191,3 +191,15 @@ stays green; `main` untouched; the four content folders stay read-only.
 - Confirms the brief's shared surfaces (search, level badges, cram/quick-review,
   progress, visualizations) work for guides as well as problems. Build 263 pages green;
   10041 links / 0 broken.
+
+## Phase 15 — CI/CD & docs (Part C) ✅
+- **CI** (`ci.yml`) now runs, in order: `astro check` → viz smoke → **runner-test** →
+  **driver-test** → `build` → link-check. Both new tests are **hermetic** (mocked fetch /
+  local files) — the execution API is never called in CI or during the build. Deploy flow
+  (`withastro/action` → Pages on `main`) unchanged and builds the new MDX/runner content.
+- **README** rewritten: two-section overview, the runner (how it works + how to swap the
+  backend to self-hosted Piston/Judge0), auto-driver caveats, how to add a guide/track,
+  updated architecture tree / routes / scripts / CI. `NEEDS_REVIEW.md` covers the provider
+  change, unverified drivers, and every AI-drafted guide. This log + final summary below.
+- Full local suite green: check 0 errors, viz 18/18, runner 10/10, driver OK, build 263
+  pages, 10041 links / 0 broken.

@@ -2,11 +2,14 @@
 import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import LevelBadge from "../../components/LevelBadge.astro";
+import TypeBadge from "../../components/TypeBadge.astro";
+import DifficultyBadge from "../../components/DifficultyBadge.astro";
 import ProgressControls from "../../components/ProgressControls.astro";
 import { href } from "../../lib/url";
 import { getNoteInfos, getSectionView, progressId } from "../../lib/notes";
 import { sectionMeta, groupMeta, humanize } from "../../data/sections";
 import { articleLd, breadcrumbLd } from "../../lib/seo";
+import { fmtDate } from "../../lib/format";
 
 export async function getStaticPaths() {
   const infos = await getNoteInfos();
@@ -101,8 +104,19 @@ const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
       <header class="mb-5">
         <div class="flex flex-wrap items-center gap-2">
           <h1 class="text-2xl sm:text-3xl font-bold">{entry.data.title}</h1>
+          {info.type !== "concept" && <TypeBadge type={info.type} />}
+          {entry.data.difficulty && <DifficultyBadge difficulty={entry.data.difficulty} />}
           <LevelBadge level={entry.data.level} />
         </div>
+        <p class="muted text-xs mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <time datetime={info.createdAt.toISOString()}>Created {fmtDate(info.createdAt)}</time>
+          {+info.updatedAt - +info.createdAt > 86400000 && (
+            <time datetime={info.updatedAt.toISOString()}>· Updated {fmtDate(info.updatedAt)}</time>
+          )}
+          {entry.data.leetcodeUrl && (
+            <a href={entry.data.leetcodeUrl} class="hover:text-[var(--accent)]" target="_blank" rel="noopener">LeetCode ↗</a>
+          )}
+        </p>
         {entry.data.description && <p class="muted mt-2">{entry.data.description}</p>}
         {entry.data.tags.length > 0 && (
           <div class="flex flex-wrap gap-1.5 mt-3 text-xs">

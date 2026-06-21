@@ -57,11 +57,19 @@ export const SECTIONS: SectionMeta[] = [
     kind: "notes",
   },
   {
+    slug: "notes",
+    title: "Notes",
+    blurb: "Low-friction captures — concepts, LeetCode write-ups, and everything else, newest first.",
+    icon: "📝",
+    order: 5,
+    kind: "notes",
+  },
+  {
     slug: "reference",
     title: "Reference",
     blurb: "Cheat sheets across CS / EDA / GPU / hardware, plus quick C++ STL reference.",
     icon: "📖",
-    order: 5,
+    order: 6,
     kind: "reference",
   },
 ];

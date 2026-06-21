@@ -2,10 +2,12 @@
 import { render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import LevelBadge from "../../components/LevelBadge.astro";
+import TypeBadge from "../../components/TypeBadge.astro";
 import { href } from "../../lib/url";
 import { getSectionViews, getSectionView, progressId } from "../../lib/notes";
 import { notesSections } from "../../data/sections";
 import { breadcrumbLd } from "../../lib/seo";
+import { fmtDate } from "../../lib/format";
 
 export async function getStaticPaths() {
   // Only notes-driven sections get the generic hub; coding/reference are specialized.
@@ -63,18 +65,28 @@ const jsonLd = [breadcrumbLd([{ name: meta.title, url: href(`/${meta.slug}`) }])
 
   {notes.length > 0 && (
     <section>
-      <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide muted">Notes · {notes.length}</h2>
-      <ol class="grid gap-2">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="font-semibold text-sm uppercase tracking-wide muted">Notes · {notes.length}</h2>
+        {notes.length > 1 && (
+          <div class="inline-flex rounded-md border border-token text-xs overflow-hidden" role="group" aria-label="Sort order" data-sort-toggle>
+            <button type="button" data-sort="newest" class="px-2.5 py-1 font-medium" aria-pressed="true">Newest</button>
+            <button type="button" data-sort="oldest" class="px-2.5 py-1 muted border-l border-token" aria-pressed="false">Oldest</button>
+          </div>
+        )}
+      </div>
+      <ol class="grid gap-2" data-note-list>
         {notes.map((n, i) => (
-          <li>
+          <li data-ts={+n.createdAt} data-order={n.entry.data.order}>
             <a href={href(`/${meta.slug}/${n.path}`)} class="card p-3 flex items-center gap-3 text-sm">
-              <span class="muted font-mono text-xs w-6 text-right">{i + 1}</span>
+              <span class="muted font-mono text-xs w-6 text-right idx">{i + 1}</span>
               <span class="progress-dot muted shrink-0" data-progress-indicator={progressId(n)}>○</span>
               <span class="flex-1">
                 <span class="font-medium">{n.entry.data.title}</span>
                 {n.entry.data.description && <span class="muted block text-xs mt-0.5">{n.entry.data.description}</span>}
               </span>
+              {n.type !== "concept" && <TypeBadge type={n.type} />}
               <LevelBadge level={n.entry.data.level} />
+              <time class="muted text-xs whitespace-nowrap hidden sm:inline" datetime={n.createdAt.toISOString()}>{fmtDate(n.createdAt)}</time>
             </a>
           </li>
         ))}
@@ -88,4 +100,39 @@ const jsonLd = [breadcrumbLd([{ name: meta.title, url: href(`/${meta.slug}`) }])
     Add a note: drop a <code>.md</code>/<code>.mdx</code> file into <code>content/{meta.slug}/</code>
     (or a sub-folder to start a group). It appears here automatically.
   </p>
+
+  <script>
+    // Client-side newest/oldest re-sort of the section's note list. Default render is
+    // newest-first (server-sorted); "Oldest" reverses by createdAt, with the curated
+    // `order` then DOM position as stable tie-breakers. Position numbers are renumbered.
+    const toggle = document.querySelector<HTMLElement>("[data-sort-toggle]");
+    const list = document.querySelector<HTMLOListElement>("[data-note-list]");
+    if (toggle && list) {
+      const renumber = () =>
+        list.querySelectorAll<HTMLElement>("li .idx").forEach((el, i) => (el.textContent = String(i + 1)));
+      const sortBy = (dir: "newest" | "oldest") => {
+        const items = Array.from(list.children) as HTMLElement[];
+        items
+          .map((el, i) => ({ el, i }))
+          .sort((a, b) => {
+            const ta = Number(a.el.dataset.ts), tb = Number(b.el.dataset.ts);
+            const oa = Number(a.el.dataset.order), ob = Number(b.el.dataset.order);
+            return (dir === "newest" ? tb - ta : ta - tb) || oa - ob || a.i - b.i;
+          })
+          .forEach(({ el }) => list.appendChild(el));
+        renumber();
+      };
+      toggle.querySelectorAll<HTMLButtonElement>("button[data-sort]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          toggle.querySelectorAll<HTMLButtonElement>("button").forEach((b) => {
+            const on = b === btn;
+            b.setAttribute("aria-pressed", String(on));
+            b.classList.toggle("muted", !on);
+            b.classList.toggle("font-medium", on);
+          });
+          sortBy(btn.dataset.sort as "newest" | "oldest");
+        });
+      });
+    }
+  </script>
 </BaseLayout>

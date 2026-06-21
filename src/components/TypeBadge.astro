@@ -1,0 +1,10 @@
+---
+// Small badge for a note's capture type (concept | leetcode | other). Reuses the
+// shared badge palette; leetcode is highlighted, concept/other stay neutral.
+import type { NoteType } from "../lib/notes";
+interface Props { type: NoteType; }
+const { type } = Astro.props;
+const label = type === "leetcode" ? "LeetCode" : type === "concept" ? "Concept" : "Note";
+const cls = type === "leetcode" ? "badge-medium" : "badge-tag";
+---
+<span class:list={["badge", cls]}>{label}</span>

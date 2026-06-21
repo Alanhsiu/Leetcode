@@ -36,6 +36,9 @@ jobs:
       - name: Code-runner unit test (hermetic — fetch is mocked, no API calls)
         run: npm run runner-test
 
+      - name: Driver-generator test (hermetic — reads local C++ corpus, no network)
+        run: npm run driver-test
+
       - name: Build
         run: npm run build
 

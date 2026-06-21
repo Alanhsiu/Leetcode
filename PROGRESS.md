@@ -125,3 +125,23 @@ stays green; `main` untouched; the four content folders stay read-only.
   in dark mode, run keybinding).
 - `/playground` page with C++/Python/JS runners (added to nav). Build 245 pages green;
   8988 links / 0 broken; CodeMirror confirmed code-split out of the global bundle.
+
+## Phase 11 — Auto-driver + problem playgrounds (Part A.3) ✅
+- `src/lib/driver.ts`: parses the first **top-level** public method of `class Solution`
+  (brace-depth aware, so nested `struct`s like Word Search II's Trie don't confuse it)
+  and synthesizes a self-contained program: portable-header harness + standard
+  `TreeNode`/`ListNode` defs & builders (added only when referenced and not already
+  defined) + a `main()` that builds **sample** inputs, calls the method, and prints the
+  result (generic `_lcPrint`, plus level-order tree / list printers). Unsupported
+  signatures (design-style `Solution` with a constructor, `vector<ListNode*>`, custom
+  `Node*`) fall back to a *compiling* stub. Everything is unverified → flagged.
+- Verified locally with `clang++` (offline): **all 132 runnable drivers compile and
+  run** (Two Sum → `[1, 0]`, level-order → `[[3], [9, 20], [15, 7]]`, reverse list →
+  `[5, 4, 3, 2, 1]`); 20 of 152 fall back to stubs. Fixed 6 real bugs found this way
+  (missing headers, `vector<ListNode*>` misclassification, nested-struct parsing,
+  design-class construction).
+- `scripts/driver-test.mjs`: hermetic structural test over the corpus (no compiler/
+  network needed) — no throws, exactly one `main()`, no duplicate type defs; wired into
+  `package.json` + `ci.yml`.
+- Problem pages gained a collapsible **"▶ Run it"** `<CodeRunner>` (solution + driver),
+  lazy-mounted on open. Build 245 pages green; 8988 links / 0 broken.

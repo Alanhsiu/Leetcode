@@ -11,7 +11,8 @@
     "check": "astro check",
     "linkcheck": "node scripts/linkcheck.mjs",
     "viz-test": "node --experimental-strip-types scripts/viz-smoke.mjs",
-    "runner-test": "node --experimental-strip-types scripts/runner-test.mjs"
+    "runner-test": "node --experimental-strip-types scripts/runner-test.mjs",
+    "driver-test": "node --experimental-strip-types scripts/driver-test.mjs"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",

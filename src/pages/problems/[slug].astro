@@ -1,12 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CodeBlock from "../../components/CodeBlock.astro";
+import CodeRunner from "../../components/CodeRunner.astro";
 import DifficultyBadge from "../../components/DifficultyBadge.astro";
 import ProgressControls from "../../components/ProgressControls.astro";
 import { getProblems } from "../../lib/content";
 import { href, slugify } from "../../lib/url";
 import { CATEGORY_VIZ } from "../../lib/patterns";
 import { renderMarkdown } from "../../lib/markdown";
+import { buildDriver } from "../../lib/driver";
 
 export function getStaticPaths() {
   const problems = getProblems();
@@ -27,6 +29,7 @@ const related = getProblems()
 const vizIds = p.patterns.flatMap((pat) => CATEGORY_VIZ[pat] ?? []);
 const sourceLabel = p.aiGenerated ? "AI-generated coverage" : p.source === "neetcode" ? "NeetCode 150" : "Misc";
 const approachHtml = p.approach ? await renderMarkdown(p.approach) : "";
+const driver = buildDriver(p.code);
 ---
 <BaseLayout title={`${p.number}. ${p.title}`} description={`C++ solution and notes for LeetCode ${p.number}. ${p.title} — pattern: ${p.patterns.join(", ")}.`}>
   <nav class="text-sm muted mb-4">
@@ -96,6 +99,25 @@ const approachHtml = p.approach ? await renderMarkdown(p.approach) : "";
     <h2 class="font-semibold mb-2">My solution <span class="muted font-normal text-sm">(C++)</span></h2>
     <CodeBlock code={p.code} lang="cpp" />
     <p class="muted text-xs mt-2">This is my own solution and notes. Problem statement © LeetCode — see the official link above.</p>
+  </section>
+
+  <!-- Run it -->
+  <section class="mt-6">
+    <details class="surface rounded-xl overflow-hidden">
+      <summary class="cursor-pointer list-none p-4 flex items-center gap-2 flex-wrap">
+        <span class="font-semibold">▶ Run it</span>
+        <span class="muted text-sm">— editable in-browser playground{driver.runnable ? " with a sample driver" : ""}</span>
+        <span class="ml-auto badge badge-complexity">C++</span>
+      </summary>
+      <div class="px-4 pb-4">
+        <p class="muted text-xs mb-3">
+          {driver.runnable
+            ? "Your solution plus an auto-generated main() and sample input so Run produces output. The driver and inputs are unverified — edit freely; Reset restores this starting point."
+            : "Your solution. A driver couldn't be auto-generated for this signature — add a main() that calls the method and prints the result, then Run."}
+        </p>
+        <CodeRunner code={driver.fullCode} language="cpp" note={driver.note} />
+      </div>
+    </details>
   </section>
 
   {related.length > 0 && (

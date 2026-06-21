@@ -464,3 +464,81 @@ git checkout main && git merge feature/v2-platform && git push origin main
 The existing `deploy.yml` then builds + publishes to GitHub Pages. The site is served under
 `/prepkit/`, so ensure the repo is named **prepkit** (the brief notes it was already
 renamed). One-time, if not already set: repo **Settings → Pages → Source = "GitHub Actions"**.
+
+---
+
+# Note-capture & activity tracking (branch `feature/note-capture`)
+
+Additive workflow on top of the existing `notes` collection — no backend, static only.
+`main` untouched; owner merges. Build/CI green; committed per phase.
+
+## Phase 1 — Schema + git-date derivation ✅
+- Extended the `notes` schema (`src/content.config.ts`): `type` (concept|leetcode|other,
+  default concept), optional `createdAt`/`updatedAt` (coerced dates), and leetcode fields
+  (`difficulty`, `leetcodeUrl`, `problemNumber`).
+- `src/lib/dates.ts`: derives `createdAt` (first commit that added the file, `--follow`) and
+  `updatedAt` (last commit) from git, cached, with mtime → build-time fallbacks so the build
+  is always green (shallow clone / uncommitted file included).
+- `src/lib/notes.ts`: `NoteInfo` now carries resolved `createdAt`/`updatedAt`/`type`
+  (explicit frontmatter wins, else git). Default sort switched to **newest-first**, ties
+  broken by curated `order` then title — so co-committed seed notes keep their sequence while
+  genuinely newer notes float up. Added `getTimelineNotes()`.
+
+## Phase 2 — Capture CLI (`npm run note` / `npm run publish`) ✅
+- `scripts/new-note.mjs`: title from arg or prompt; asks type + optional tags (Enter accepts
+  defaults — title is the only required input); writes a timestamped `content/notes/<slug>.md`
+  from a concept or leetcode template; opens `$EDITOR`. Works interactively (TTY) and from
+  piped stdin (scriptable/testable).
+- `scripts/publish.mjs`: stages all, commits `note: <title> (<YYYY-MM-DD>)` (title read from
+  the changed note's frontmatter), pushes the current branch. No-ops on a clean tree.
+- Wired `note` + `publish` into `package.json`. These run locally only — never in CI.
+
+## Phase 3 — Notes section + section-index sort toggle ✅
+- Registered a `notes` section (`src/data/sections.ts`, order 5; Reference → 6) + a
+  `content/notes/index.md` landing so `/notes` always resolves (nav link never breaks).
+- Section index: type badge + created date per note, and a client **Newest/Oldest** toggle
+  that re-sorts + renumbers in place (`TypeBadge.astro`, `src/lib/format.ts`).
+- Individual note header now shows created/updated dates, type/difficulty badges, and a
+  LeetCode link when present.
+
+## Phase 4 — `/timeline` + nav ✅
+- `src/pages/timeline.astro`: ALL notes grouped by day, newest first, each with type +
+  section + tag badges and a link; client filters by type and tag (empty day-groups hide);
+  stats — this week / this month / total / current day-streak (grace of one day), counts by
+  type. All from durable git/frontmatter timestamps, not localStorage.
+- Added a **Timeline** entry to the header nav (desktop + mobile).
+
+## Phase 5 — CI, docs, self-review ✅
+- `fetch-depth: 0` in `ci.yml` + `deploy.yml` so git-derived dates match production.
+- README **"How I capture a note"** (two-command flow + GitHub-web-editor fallback for
+  phones); PLAN/PROGRESS/NEEDS_REVIEW updated.
+- Self-review: `astro check` 0 errors · build green (274 pages) · `linkcheck` 0 broken ·
+  sample concept + leetcode notes rendered, appeared on `/timeline`, sorted correctly ·
+  git-date derivation verified against `git log` for existing notes (no `createdAt`) ·
+  samples deleted · existing pages/features intact.
+
+---
+
+## The everyday workflow
+
+Two commands, from anywhere with the repo checked out:
+
+```bash
+npm run note -- "What is a service mesh"   # 1. scaffold a timestamped note + open $EDITOR
+#    ...write the note, save, close the editor...
+npm run publish                            # 2. commit "note: <title> (<date>)" + push
+```
+
+`npm run note` only requires a title; press Enter through the type/tags prompts to accept
+defaults. On `main`, `npm run publish` triggers the GitHub Pages deploy; on a feature branch
+it just pushes. No CLI? Add a markdown file via the GitHub web editor (works on a phone) — the
+build derives its timestamp from the commit date. See README → **How I capture a note**.
+
+## Go live (owner's move — `main` untouched)
+
+```bash
+git checkout main && git merge feature/note-capture && git push origin main
+```
+
+The existing `deploy.yml` then builds + publishes to GitHub Pages (`/timeline`, `/notes`,
+git-derived timestamps included).

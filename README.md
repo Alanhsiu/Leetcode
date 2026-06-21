@@ -81,6 +81,52 @@ content/<section>/<group>/index.md      → /<section>/<group>         (group la
   for a runnable snippet, or `import Viz from "@/components/Viz.astro"` then
   `<Viz id="dijkstra" />`. The note is automatically added to search, cram, and the dashboard.
 
+## How I capture a note
+
+The everyday flow is **two commands**:
+
+```bash
+npm run note -- "What is a service mesh"   # 1. scaffold + open in $EDITOR
+# ...write the note, save, close the editor...
+npm run publish                            # 2. commit + push
+```
+
+- `npm run note` is the only thing you have to think about. Give it a **title** (as the
+  argument above, or it'll prompt). It then asks **type** (`concept` | `leetcode` | `other`,
+  default `concept`) and **optional tags** — press Enter to accept the defaults. It writes a
+  timestamped markdown file to `content/notes/<slug>.md` (auto `createdAt`/`updatedAt`,
+  `slug` from the title) from a template and opens it in `$EDITOR`.
+  - **`leetcode`** notes get extra prompts (problem number, difficulty, official URL) and a
+    template with **Problem / Approach / My solution** (a `cpp` code block) / **Complexity**.
+- `npm run publish` stages everything, commits with an auto message
+  `note: <title> (<YYYY-MM-DD>)`, and pushes the **current branch**. On `main` that triggers
+  the Pages deploy; on a feature branch it just pushes for review.
+
+Captured notes appear under **`/notes`** (newest first, with a Newest/Oldest toggle) and on
+the **[`/timeline`](/timeline)** page (all notes, grouped by day, with type/tag filters and
+stats).
+
+### From a phone / no CLI (GitHub web editor)
+
+No terminal? Add a note straight from the GitHub web editor — it works on mobile:
+
+1. In the repo, go to **`content/notes/`** → **Add file → Create new file**.
+2. Name it `something-descriptive.md` and paste this template:
+   ```markdown
+   ---
+   title: Your note title
+   type: concept        # concept | leetcode | other
+   tags: [tag1, tag2]
+   ---
+
+   ## Summary
+
+   ...
+   ```
+3. Commit. **You don't need a `createdAt`** — the build derives it from the file's first
+   git commit date (`src/lib/dates.ts`), so the note is timestamped and sorts correctly on
+   `/notes` and `/timeline` automatically. Committing to `main` deploys it.
+
 ## Architecture
 
 ```
@@ -92,7 +138,10 @@ content/<section>/        notes collection: system-design/, behavioral/, learnin
 src/
   content.config.ts     Content Layer: the generalized "notes" collection (glob + zod)
   lib/content.ts        pipeline: import.meta.glob(?raw) over coding/ + reference/
-  lib/notes.ts          classifies notes into section/group/landing; builds section views
+  lib/notes.ts          classifies notes into section/group/landing; builds section views;
+                         resolves createdAt/updatedAt + powers the /timeline list
+  lib/dates.ts          git-derived createdAt/updatedAt (first/last commit) with fallbacks
+  lib/format.ts         small client-safe date helpers (day/week keys, headings)
   lib/runner.ts         ⭐ ONE runCode() client; swappable backend (Wandbox default)
   lib/driver.ts         auto-generates a main() + sample input for a class Solution
   lib/seo.ts            ⭐ SEO single-source: page list, OG route key, canonical, JSON-LD
@@ -109,6 +158,8 @@ src/
   pages/                routes (below) + open-graph/[...route].ts, rss.xml.ts,
                         search-index.json.ts, 404.astro
 public/                 robots.txt, site.webmanifest, favicon set (generated)
+scripts/new-note.mjs    `npm run note` — scaffold a timestamped note + open $EDITOR
+scripts/publish.mjs     `npm run publish` — commit "note: <title> (<date>)" + push
 scripts/build-standards.mjs  assemble per-problem JSON → src/data/standard/*.ts shards
 scripts/gen-icons.mjs   regenerate the favicon/app-icon set from icon-master.svg
 scripts/linkcheck.mjs   internal broken-link checker (used in CI)
@@ -117,9 +168,9 @@ scripts/{viz-smoke,runner-test,driver-test}.mjs  hermetic tests (used in CI)
 
 **Routes:** `/` · `/problems` (filterable) · `/problems/<n>-<slug>` (Standard + My + playground)
 · `/patterns` + `/patterns/<slug>` · `/neetcode150` · `/visualizations` · `/playground` ·
-`/cheatsheets` (+ pages) · `/reference` (+ pages) · `/cram` · `/dashboard` ·
+`/cheatsheets` (+ pages) · `/reference` (+ pages) · `/cram` · `/dashboard` · `/timeline` ·
 `/<section>` · `/<section>/<group>` · `/<section>/[...note]` (System Design, Behavioral,
-Learning — generic).
+Learning, Notes — generic).
 
 ### Notable bits
 - **Search**: a build-time `/search-index.json` + a Fuse.js overlay (press `/`), spanning

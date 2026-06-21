@@ -159,3 +159,25 @@ Phase 1 added two new drop-in sections with **original, AI-drafted starter notes
 copied material): `content/system-design/` (index, framework, building-blocks) and
 `content/behavioral/` (index, star-method, common-questions). Review for accuracy/voice;
 extend or replace freely (drop a markdown file into the section folder).
+
+## J. Note-capture & timeline (branch `feature/note-capture`)
+Additive feature on top of the `notes` collection — nothing existing was removed.
+
+- **Sort within section indexes.** Listings now sort by curated `order` first, then
+  `createdAt` **desc**, then title. Curated tracks (Temporal / Mender / GCP, System Design,
+  Behavioral) set explicit `order`, so they keep their hand-ordered sequence regardless of
+  when each file was committed. Captured notes leave `order` at its default (999), so they
+  tie on `order` and fall through to newest-first — e.g. the `/notes` section reads
+  newest-first. A client **Newest/Oldest** toggle re-sorts a section purely by date on
+  demand (reload restores the default order). The `/timeline` page is always pure
+  chronological. **Verify** the learning tracks still read top-to-bottom as intended.
+- **Git-derived timestamps.** Notes without an explicit `createdAt`/`updatedAt` derive them
+  from git history (first / last commit). This requires full history at build time — CI and
+  deploy now check out with `fetch-depth: 0`. A brand-new uncommitted file falls back to its
+  filesystem mtime, then build time. **Verify** dates on `/timeline` look right after the
+  first deploy from `main`.
+- **New `notes` section + `/timeline` page** are public surfaces. The `content/notes/`
+  section landing and the timeline stats (this week/month, day streak) are computed at build
+  time relative to the build date.
+- **CLI scripts** (`scripts/new-note.mjs`, `scripts/publish.mjs`) run locally only — never in
+  CI/build. `npm run publish` pushes the **current branch**; on `main` it deploys.

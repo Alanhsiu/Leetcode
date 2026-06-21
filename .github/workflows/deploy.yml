@@ -29,6 +29,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history so notes without an explicit createdAt can derive their
+          # timestamp from the file's first git commit (see src/lib/dates.ts).
+          fetch-depth: 0
       - name: Build with Astro
         uses: withastro/action@v3
         with:

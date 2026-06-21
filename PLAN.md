@@ -186,3 +186,39 @@ shows up in nav automatically.
 shows Standard (+ My where it exists) · nav has zero horizontal overflow at 360/768/1280/1920 ·
 search/tags/cram/progress/viz/runner work across all sections · OG/sitemap/RSS/manifest/icons
 regenerate under the new base.
+
+---
+
+## 7. Note-capture & activity tracking (branch `feature/note-capture`)
+
+> Add a low-friction capture + activity workflow on top of the existing `notes`
+> collection. Static only (no backend, no paid services); build on what exists; keep
+> every current feature working. `main` untouched — owner merges.
+
+**Goal:** make capturing a note a two-command habit, and make "what did I study, when"
+visible — durably (git-based), not via localStorage.
+
+1. **One-command capture (CLI).** `npm run note -- "Title"` scaffolds a timestamped note
+   (type `concept`|`leetcode`|`other`, optional tags; auto `createdAt`/`updatedAt`/`slug`)
+   from a template and opens `$EDITOR` — title is the only required input. A `leetcode`
+   template variant adds problem number / official link / difficulty / Approach / My
+   solution (cpp). `npm run publish` stages + commits `note: <title> (<date>)` + pushes the
+   current branch. Everyday flow = two commands.
+2. **Automatic timestamps + sorting.** Every note has `createdAt`/`updatedAt`. When omitted
+   (hand-added or via the GitHub web editor on mobile), derive at build from the file's
+   first git-commit date (`src/lib/dates.ts`) so nothing is ever unsorted. Default sort
+   newest-first (ties fall back to curated `order`, preserving the learning tracks);
+   section indexes get a Newest/Oldest toggle.
+3. **Activity timeline.** New `/timeline` (+ nav) lists ALL notes chronologically grouped
+   by day, with type + tag badges and links; filter by type/tag; lightweight stats (this
+   week/month, counts by type, a day streak). Derived from durable timestamps, not
+   localStorage.
+4. **Mobile / anywhere capture.** Documented GitHub-web-editor fallback (no CLI); the
+   git-date derivation timestamps it automatically.
+5. **Docs.** README "How I capture a note" (two-command flow + GitHub-web fallback);
+   PLAN/PROGRESS/NEEDS_REVIEW updated.
+
+**Self-review gate:** `astro check` 0 errors · viz/runner/driver tests pass · `npm run build`
+green · `npm run linkcheck` 0 broken · a sample concept + leetcode note render, appear on
+`/timeline`, and sort correctly · a note with no `createdAt` derives its date from git ·
+existing pages/features intact · samples deleted · CI green; branch pushed; `main` untouched.

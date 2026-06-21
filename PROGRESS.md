@@ -353,3 +353,114 @@ The existing `deploy.yml` rebuilds + publishes to GitHub Pages. After deploy, su
 project-site `robots.txt` lives under `/Leetcode/` and isn't read from the domain root —
 see `NEEDS_REVIEW.md` §G). Re-run `node scripts/gen-icons.mjs` only if the master icon
 SVG changes.
+
+---
+---
+
+# PART v2 — PrepKit interview-prep platform (branch `feature/v2-platform`)
+
+Generalize the site from a LeetCode-focused notes site into **PrepKit**, a general
+interview-prep platform. Build stays green; `main` untouched; commit per phase; CI hermetic.
+
+## Phase 0 — Explore & plan ✅
+- Re-read the whole repo + the four content folders. Wrote `PLAN.md` (the new
+  section/content model, folder relocation, per-problem Standard+My layout, nav redesign,
+  rebrand checklist). Baseline build verified green (264 pages).
+
+## Phase 1 — Generalize into drop-in sections + relocate the four folders ✅
+- **Relocated** (via `git mv`, history preserved): `NeetCode 150/` + `Misc/` → `coding/`;
+  `Interview Cheat Sheet/` + `CommonUsage/` → `reference/`. Updated `content.ts` globs +
+  the driver-test corpus path.
+- Replaced the learning-only collection with **one generalized `notes` Content-Layer
+  collection** (`content/<section>/[<group>/]<note>.md`) powering **System Design,
+  Behavioral, and Learning** from a single drop-in structure. Because Astro's glob loader
+  collapses `index` ids, notes are classified from the whole entry set (`src/lib/notes.ts`).
+- `src/data/sections.ts` (section + group registry) replaced `tracks.ts`; generic routes
+  `/[section]` + `/[section]/[...slug]` replaced the learning-specific pages (existing
+  `/learning/...` URLs preserved). Updated home, cram, dashboard, search-index, and seo.
+- Seeded **original** System Design + Behavioral starter notes. Added
+  `remark-base-links.mjs` so notes use root-absolute internal links safely.
+- Green: 270 pages, 12140 links / 0 broken; check 0 errors; viz/runner/driver pass.
+
+## Phase 2 — Standard Solution + My Solution on every problem ✅
+- Each problem page now has two clearly-separated parts: **(a) Standard Solution** (original
+  summary + approach + canonical C++ + complexity) and **(b) My Solution** (my own file,
+  where I have one). The "▶ Run it" playground runs the shown solution.
+- `Problem` split into `standard` + `mySolution` with a primary `code`/complexity for shared
+  surfaces (cram, search, driver) — those keep working unchanged.
+- **AI-authored Standard Solutions for all 188 problems:** 152 authored + adversarially
+  verified by a background multi-agent workflow (305 agents), then **syntax-checked offline
+  with `clang++ -fsyntax-only` (all 152 compile)**; the other 36 reuse the existing
+  `AI_SOLUTIONS`. Stored in `src/data/standard/s1..s4.ts` (assembled by
+  `scripts/build-standards.mjs`; per-problem JSON intermediates are gitignored). Provenance
+  in `NEEDS_REVIEW.md` §H.
+
+## Phase 3 — Responsive nav + generalized hero ✅
+- Replaced the overflowing flat nav with **grouped, accessible dropdowns** (Coding,
+  Reference) + direct links for the notes sections (from the registry, so new sections
+  appear automatically); Dashboard moved to the right cluster. Dropdowns open on hover,
+  keyboard focus-within, and click/touch (Escape + outside-click close, `aria-expanded`
+  synced). Desktop nav at `lg+`; hamburger accordion below — **no horizontal overflow** at
+  360 / 768 / 1280 / 1920 (the long links live in absolutely-positioned menus, so they can't
+  widen the bar).
+- Broadened the home hero from DSA-only to the full platform; Coding keeps its own intro.
+
+## Phase 4 — Rebrand to PrepKit + base `/prepkit` ✅
+- `astro.config` base `/Leetcode` → `/prepkit` (site unchanged); package name → `prepkit`.
+- `SITE_NAME` → **PrepKit**; broadened description; title template, header logo, footer,
+  manifest, robots sitemap host, RSS title all rebranded. OG cards, sitemap, RSS, canonical,
+  and manifest icons regenerate under the new base; all internal links route through
+  `href()`/`BASE_URL`.
+
+## Phase 5 — CI/CD & docs ✅
+- CI was already hermetic and free of stale path/brand refs — no changes needed beyond docs.
+- Rewrote `README.md` (sections, the drop-in note structure, per-problem Standard+My,
+  relocated folders, updated architecture/routes, `/prepkit` base). `PLAN.md`, this log, and
+  `NEEDS_REVIEW.md` (§H/§I) updated. Ran the full self-review loop (below).
+
+---
+
+## SUMMARY — PrepKit v2 platform
+
+PrepKit is now a general interview-prep platform on `feature/v2-platform`:
+
+- **Sections.** Top-level **Coding** (specialized: problems, NeetCode 150, patterns, viz,
+  playground, cram, dashboard), **System Design**, **Behavioral**, **Learning**, and
+  **Reference**. System Design / Behavioral / Learning share **one drop-in markdown "notes"
+  structure** — drop a file to add a page, drop a folder to add a section/group, zero wiring.
+- **The four original folders** were relocated with `git mv` (history preserved) into
+  `coding/` and `reference/`; every original note is reachable.
+- **Every problem** shows a **Standard Solution** (canonical, AI-authored, clang-syntax-checked)
+  and **My Solution** (my own file, where present); the in-browser runner still works.
+- **Responsive grouped nav** (no overflow at any width) and a **platform-wide home hero**.
+- **Rebranded to PrepKit** with `base: '/prepkit'` everywhere (OG/sitemap/RSS/manifest/icons).
+- Hermetic CI unchanged and green.
+
+### What to check first
+1. A problem page — `/problems/1-two-sum` (Standard Solution **and** My Solution + viz +
+   "▶ Run it") and an AI-only one like `/problems/56-merge-intervals` (Standard only).
+2. The new sections — `/system-design`, `/behavioral` (drop-in notes), and `/learning`
+   (unchanged track URLs preserved).
+3. The **nav** at 360 / 768 / 1280 / 1920 — grouped dropdowns, nothing overflows.
+4. `NEEDS_REVIEW.md` §H/§I — the 188 AI Standard Solutions + the seed notes to verify.
+5. Search (`/`), `/cram`, and `/dashboard` — all now span problems **and** notes.
+
+### Preview locally
+```bash
+npm install
+npm run dev        # http://localhost:4321/prepkit/
+# or the production build + full checks:
+npm run build && npm run preview
+npm run check && npm run viz-test && npm run runner-test && npm run driver-test
+npm run build && npm run linkcheck
+```
+Note: the code runner calls the public Wandbox sandbox from your browser at runtime; the
+build, tests, and CI never call it.
+
+### Go live (your move — `main` untouched)
+```bash
+git checkout main && git merge feature/v2-platform && git push origin main
+```
+The existing `deploy.yml` then builds + publishes to GitHub Pages. The site is served under
+`/prepkit/`, so ensure the repo is named **prepkit** (the brief notes it was already
+renamed). One-time, if not already set: repo **Settings → Pages → Source = "GitHub Actions"**.

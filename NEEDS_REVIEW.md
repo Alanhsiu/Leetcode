@@ -47,3 +47,54 @@ Filenames are treated as the source of truth for problem number + title. A few s
 - `NeetCode 150/332. Coin Challenge.cpp` — **resolved.** Its function is `coinChange`, so it is actually LeetCode **#322 Coin Change** mislabeled `332`. It is now mapped to the `coin-change` problem, so your own solution is shown (and the AI-generated coin-change is skipped). The page still shows the filename's "332. Coin Challenge" — rename to `322. Coin Change.cpp` to fix. Because this freed up #332, I added an AI-generated **Reconstruct Itinerary** (the real #332) — see §A.
 - Decision: a file is treated as *mislabeled* when its number maps to a NeetCode 150 problem whose title doesn't match the filename — in that case it does NOT inherit that problem's metadata/official link (prevents two files claiming one slug). This is why correcting the data above keeps coverage at a *true* 150/150.
 - _(any further quirks discovered during the build are appended here)_
+
+---
+
+# PART A/B/C — Online IDE + Learning Platform (added on `feature/online-ide-and-learning`)
+
+## D. Execution provider decision (verify / revisit)
+- The brief defaulted to the public **Piston** API. Confirmed on 2026-06-20 that
+  `POST https://emkc.org/api/v2/piston/execute` now returns **HTTP 401 — "whitelist
+  only as of 2/15/2026"**, so it can't be the default (and self-hosting is out of
+  scope: no backend). **Default provider is now Wandbox** (`wandbox.org`), behind a
+  swappable abstraction (`src/lib/runner.ts`); `piston` (configurable base URL) and a
+  `godbolt` note remain for self-host/whitelist. **Decision to confirm:** OK to depend
+  on the free public Wandbox sandbox? It's a community service (rate limits/uptime not
+  guaranteed). To swap: edit the `RUNNER` object in `src/lib/runner.ts`.
+- Code runs in a **public** sandbox from the visitor's browser — the UI warns not to
+  paste secrets. CI/build never call it (hermetic).
+
+## E. Auto-generated problem drivers (`src/lib/driver.ts`) — UNVERIFIED
+- Each problem page's **"▶ Run it"** playground appends an **auto-generated `main()`**
+  to your solution with **heuristic sample inputs** (e.g. `vector<int> = {2,7,11,15}`,
+  `target = 9`, a fixed sample tree/list). These are **not** the LeetCode test cases —
+  they exist so "Run" produces visible output; the output is *a* result, not a *checked*
+  result. The editor is fully editable and **Reset** restores the generated starting
+  point.
+- Coverage: of 152 C++ files, **132 get a runnable driver** (verified to compile with
+  `clang++` locally) and **20 fall back to a compiling stub** (design-style `Solution`
+  with a constructor, `vector<ListNode*>`, custom `Node*`/graph types, etc.) that asks
+  you to add a driver. Standard `TreeNode`/`ListNode` definitions are injected only when
+  referenced and not already defined.
+- AI-authored solutions (the 36 from the prior phase) also get drivers via the same
+  mechanism — doubly worth verifying.
+- To verify: open a problem, expand **Run it**, press Run, and sanity-check. Report any
+  signature that should be runnable but stubs out.
+
+## F. AI-drafted learning guides (`content/learning/**`) — `aiGenerated: true`
+All guides below were **drafted by an AI assistant**, are badged "⚠ AI-drafted" on the
+site, and are **not verified**. Temporal/Mender/GCP move fast and the assistant's
+knowledge has a cutoff — **confirm every command, flag, and claim against official
+docs** before relying on them.
+
+- **Temporal** (`docs.temporal.io`): _What is Durable Execution?_, _Workflows &
+  Activities_, _Workers & Task Queues_, _Retries & Timeouts_ (+ track landing).
+- **Mender** (`docs.mender.io`): _Why OTA Updates Are Hard (A/B Updates)_, _Mender
+  Artifacts_, _Deployments & Device Groups_, _State Scripts & Delta Updates_ (+ landing).
+- **GCP** (`cloud.google.com/docs`): _Cloud Run_, _GKE_, _Pub/Sub_, _Cloud Storage_,
+  _IAM_, _BigQuery_ (+ landing). GCP CLI snippets are **read-only references** (never
+  executed in-browser); double-check service names, flags, and pricing claims.
+
+Specific things to sanity-check: Temporal timeout names/semantics and versioning
+guidance; Mender state-script state names and delta trade-offs; GCP `gcloud`/`bq` flags,
+storage-class minimums, and any cost statements.

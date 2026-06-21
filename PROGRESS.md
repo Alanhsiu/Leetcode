@@ -165,3 +165,17 @@ stays green; `main` untouched; the four content folders stay read-only.
   guide each; the Temporal guide is `.mdx` and embeds a `<CodeRunner>` (Python) to prove
   component-in-guide works; the GCP guide uses read-only `gcloud` blocks (no fake runs).
 - Build 252 pages green; 9679 links / 0 broken; typecheck clean.
+
+## Phase 13 — Track content: Temporal / Mender / GCP (Part B.2) ✅
+- Authored concise, structural **starter guides** (all `aiGenerated: true`, badged,
+  listed in NEEDS_REVIEW.md §F):
+  - **Temporal** (4): durable execution, workflows & activities, workers & task queues,
+    retries & timeouts.
+  - **Mender** (4): why OTA is hard / A/B updates, artifacts, deployments & device
+    groups, state scripts & delta updates.
+  - **GCP** (6): Cloud Run, GKE, Pub/Sub, Cloud Storage, IAM, BigQuery — the services
+    named in the brief; CLI shown as **read-only** `gcloud`/`bq` blocks (never faked).
+- Homepage gained a **Learning tracks** section. Updated `NEEDS_REVIEW.md` with the
+  provider change (§D), the unverified auto-drivers + coverage (§E), and every
+  AI-drafted guide with the official-docs to check against (§F).
+- Build 263 pages green; 10024 links / 0 broken; 14 guides indexed for search.

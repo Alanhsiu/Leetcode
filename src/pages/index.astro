@@ -4,8 +4,10 @@ import { href } from "../lib/url";
 import { getStats } from "../lib/content";
 import { PATTERNS } from "../lib/patterns";
 import { getProblemsByPattern } from "../lib/content";
+import { getTrackViews } from "../lib/learning";
 
 const stats = getStats();
+const tracks = await getTrackViews();
 const patternCards = PATTERNS.map((p) => ({
   ...p,
   count: getProblemsByPattern(p.name).length,
@@ -71,4 +73,27 @@ const patternCards = PATTERNS.map((p) => ({
       ))}
     </div>
   </section>
+
+  <!-- Learning tracks -->
+  {tracks.length > 0 && (
+    <section class="mt-14">
+      <div class="flex items-baseline justify-between">
+        <h2 class="text-2xl font-bold">Learning tracks</h2>
+        <a href={href("/learning")} class="text-sm muted hover:text-[var(--accent)]">All tracks →</a>
+      </div>
+      <p class="mt-1 muted text-sm">Concept-first guides beyond coding interviews — with the same in-page code runner.</p>
+      <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {tracks.map((t) => (
+          <a href={href(`/learning/${t.meta.slug}`)} class="card p-4 block">
+            <div class="flex items-center gap-2">
+              <span class="text-xl" aria-hidden="true">{t.meta.icon}</span>
+              <h3 class="font-semibold">{t.meta.title}</h3>
+              <span class="badge badge-tag ml-auto">{t.guides.length} guides</span>
+            </div>
+            <p class="mt-1.5 text-sm muted line-clamp-2">{t.meta.blurb}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 </BaseLayout>

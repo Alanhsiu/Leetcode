@@ -82,7 +82,6 @@ const trackViews = (await getTrackViews()).filter((t) => t.guides.length > 0);
               <summary class="flex items-center gap-2 p-3 cursor-pointer list-none">
                 <span class="progress-dot muted shrink-0" data-progress-indicator={guideProgressId(g)}>○</span>
                 <span class="flex-1 text-sm font-medium">{g.data.title}</span>
-                {g.data.aiGenerated && <span class="badge badge-tag hidden sm:inline" title="AI-drafted">AI</span>}
                 <LevelBadge level={g.data.level} />
               </summary>
               <div class="px-3 pb-3 border-t border-token pt-3 text-sm">

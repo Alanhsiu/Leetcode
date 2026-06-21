@@ -13,7 +13,7 @@ export async function getStaticPaths() {
 const { track } = Astro.params;
 const view = await getTrackView(track!);
 if (!view) return Astro.redirect(href("/learning"));
-const { meta, landing, guides, aiGenerated } = view;
+const { meta, landing, guides } = view;
 const Landing = landing ? (await render(landing)).Content : null;
 ---
 <BaseLayout title={meta.title} description={meta.blurb} wide>
@@ -27,7 +27,6 @@ const Landing = landing ? (await render(landing)).Content : null;
     <div class="flex items-center gap-3 flex-wrap">
       <span class="text-3xl" aria-hidden="true">{meta.icon}</span>
       <h1 class="text-3xl font-bold">{meta.title}</h1>
-      {aiGenerated && <span class="badge badge-medium" title="Contains AI-drafted content to verify">⚠ AI-drafted</span>}
     </div>
     <p class="mt-2 muted max-w-2xl">{meta.blurb}</p>
   </header>
@@ -53,7 +52,6 @@ const Landing = landing ? (await render(landing)).Content : null;
                 <span class="font-medium">{g.data.title}</span>
                 {g.data.description && <span class="muted block text-xs mt-0.5">{g.data.description}</span>}
               </span>
-              {g.data.aiGenerated && <span class="badge badge-tag" title="AI-drafted">AI</span>}
               <LevelBadge level={g.data.level} />
             </a>
           </li>

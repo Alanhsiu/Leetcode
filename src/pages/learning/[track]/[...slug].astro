@@ -44,9 +44,6 @@ const progressId = guideProgressId(entry);
     <div class="flex flex-wrap items-center gap-2">
       <h1 class="text-2xl sm:text-3xl font-bold">{entry.data.title}</h1>
       <LevelBadge level={entry.data.level} />
-      {entry.data.aiGenerated && (
-        <span class="badge badge-medium" title="AI-drafted — verify against official docs">⚠ AI-drafted</span>
-      )}
     </div>
     {entry.data.description && <p class="muted mt-2">{entry.data.description}</p>}
     {entry.data.tags.length > 0 && (
@@ -55,13 +52,6 @@ const progressId = guideProgressId(entry);
       </div>
     )}
   </header>
-
-  {entry.data.aiGenerated && (
-    <aside class="surface rounded-xl p-4 mb-6 text-sm" style="border-color: color-mix(in srgb, var(--color-medium) 45%, var(--border));">
-      <strong class="badge badge-medium">⚠ AI-drafted</strong>
-      <span class="muted ml-2">This guide was drafted by an AI assistant and is <strong>not yet verified</strong>. Temporal/Mender/GCP change fast — confirm details against the official docs. Listed in <code>NEEDS_REVIEW.md</code>.</span>
-    </aside>
-  )}
 
   <article class="prose">
     <Content />

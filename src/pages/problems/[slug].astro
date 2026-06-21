@@ -27,7 +27,7 @@ const related = getProblems()
   .filter((q) => q.routeSlug !== p.routeSlug && q.patterns.some((x) => p.patterns.includes(x)))
   .slice(0, 6);
 const vizIds = p.patterns.flatMap((pat) => CATEGORY_VIZ[pat] ?? []);
-const sourceLabel = p.aiGenerated ? "AI-generated coverage" : p.source === "neetcode" ? "NeetCode 150" : "Misc";
+const sourceLabel = p.aiGenerated ? "Additional coverage" : p.source === "neetcode" ? "NeetCode 150" : "Misc";
 const approachHtml = p.approach ? await renderMarkdown(p.approach) : "";
 const driver = buildDriver(p.code);
 ---
@@ -45,7 +45,6 @@ const driver = buildDriver(p.code);
       </h1>
       <DifficultyBadge difficulty={p.difficulty} />
       {p.inNeetCode150 && <span class="badge badge-tag">NeetCode 150</span>}
-      {p.aiGenerated && <span class="badge badge-medium" title="Authored by AI — verify before trusting">⚠ AI-generated</span>}
     </div>
     <div class="flex flex-wrap items-center gap-1.5 mt-3 text-xs">
       {p.patterns.map((pat) => (
@@ -73,11 +72,9 @@ const driver = buildDriver(p.code);
     </dl>
   </section>
 
-  {p.aiGenerated && (
-    <section class="surface rounded-xl p-4 mb-6" style="border-color: color-mix(in srgb, var(--color-medium) 45%, var(--border));">
-      <p class="text-sm"><strong class="badge badge-medium">⚠ AI-generated</strong></p>
-      <p class="text-sm muted mt-2">I don't have my own note for this one yet, so the summary and solution below were written by an AI assistant and are <strong>not yet verified</strong>. Treat them as a starting point.</p>
-      {p.summary && <p class="mt-3"><span class="muted text-xs uppercase tracking-wide block mb-1">Summary</span>{p.summary}</p>}
+  {(p.summary || approachHtml) && (
+    <section class="surface rounded-xl p-4 mb-6">
+      {p.summary && <p><span class="muted text-xs uppercase tracking-wide block mb-1">Summary</span>{p.summary}</p>}
       {approachHtml && (
         <div class="mt-3">
           <span class="muted text-xs uppercase tracking-wide block mb-1">Approach</span>

@@ -20,3 +20,8 @@ npm-debug.log*
 blog/public/
 blog/resources/
 blog/.hugo_build.lock
+
+# Standard Solution generation intermediates (assembled into src/data/standard/*.ts
+# by scripts/build-standards.mjs; the shards are the committed source of truth)
+scripts/std/
+scripts/std-input.json

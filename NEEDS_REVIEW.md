@@ -124,3 +124,38 @@ Purely technical SEO/a11y/perf polish; **no new content or claims** were authore
   darkened so all text clears WCAG AA in **both** themes; the github-dark Shiki comment
   token was lightened (it was 3.9:1 on the dark code bg). Ratios were computed by hand
   for light mode (Lighthouse only exercises the default dark theme).
+
+---
+
+# PART v2 — PrepKit platform (branch `feature/v2-platform`)
+
+## H. Standard Solutions on every problem — AI-authored, UNVERIFIED
+Every coding problem page now shows a **Standard Solution** (canonical reference:
+original summary + approach + C++ + complexity) and, where you have one, **My Solution**
+(your original file, unchanged). The Standard Solutions are **AI-authored and were NOT run
+against the LeetCode judge** — verify correctness before trusting them.
+
+Provenance of the **188** Standard Solutions:
+- **152** for problems you already solved: authored by a background multi-agent workflow
+  (author → adversarial verify), one per problem, then **syntax-checked offline with
+  `clang++ -std=c++17 -fsyntax-only` (all 152 compile)**. Source of truth:
+  `src/data/standard/s1..s4.ts` (keyed by `routeSlug`) — that is the batch list to verify.
+  Generated from per-problem JSON via `scripts/build-standards.mjs` (intermediates are
+  gitignored under `scripts/std/`).
+- **36** for NeetCode 150 problems with no note of yours: reused from the pre-existing
+  `AI_SOLUTIONS` (see §A) — these double as both the only solution and the Standard.
+- 6 generated solutions used `#include <bits/stdc++.h>` (fine on the GCC-based Wandbox
+  runner but not macOS clang) or were missing `<functional>`; their includes were
+  corrected by hand (100, 116, 131, 191, 202, 572) and re-checked.
+
+Copyright: every Standard `summary` is an original paraphrase; no LeetCode problem text is
+reproduced. The official problem link remains on each page.
+
+Things to spot-check in batches: signature correctness vs. the real LeetCode prototype,
+edge cases, and that each Standard's stated complexity matches its code.
+
+## I. Seed notes for the new sections — `aiGenerated: true`
+Phase 1 added two new drop-in sections with **original, AI-drafted starter notes** (no
+copied material): `content/system-design/` (index, framework, building-blocks) and
+`content/behavioral/` (index, star-method, common-questions). Review for accuracy/voice;
+extend or replace freely (drop a markdown file into the section folder).

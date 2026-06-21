@@ -7,6 +7,7 @@
 import { NEETCODE_150, NEETCODE_CATEGORIES, type Difficulty } from "../data/neetcode150";
 import { EXTRA_PROBLEMS } from "../data/extraProblems";
 import { AI_SOLUTIONS } from "../data/aiSolutions";
+import { STANDARD_SOLUTIONS } from "../data/standardSolutions";
 import { slugify } from "./url";
 import { markdownToText } from "./markdown";
 
@@ -46,23 +47,43 @@ const referenceRaw = import.meta.glob("/reference/cpp/*.md", {
 export type ProblemSource = "neetcode" | "misc";
 export type DifficultyOrUnknown = Difficulty | "Unknown";
 
+/** A canonical, AI-authored reference attached to a problem (Standard Solution). */
+export interface StandardView {
+  summary?: string;
+  approach?: string;
+  code: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
+}
+
+/** My own note/code for a problem (My Solution), parsed from the .cpp file. */
+export interface MySolutionView {
+  code: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
+}
+
 export interface Problem {
   routeSlug: string;
   number: number;
   title: string;
   source: ProblemSource;
-  code: string;
   language: string;
-  timeComplexity?: string;
-  spaceComplexity?: string;
   difficulty: DifficultyOrUnknown;
   patterns: string[];
   leetcodeSlug?: string;
   leetcodeUrl?: string;
   inNeetCode150: boolean;
+  /** true when there is no note of mine — the Standard Solution is the only one. */
   aiGenerated: boolean;
-  summary?: string; // original paraphrase (AI-generated coverage only)
-  approach?: string; // markdown approach notes (AI-generated coverage only)
+  /** Canonical reference solution (present on every problem once authored). */
+  standard?: StandardView;
+  /** My own solution/note, where I have one. */
+  mySolution?: MySolutionView;
+  /** Primary code/complexity for shared surfaces (mine if present, else standard). */
+  code: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
   searchText: string;
 }
 
@@ -183,7 +204,6 @@ function buildProblem(path: string, code: string, source: ProblemSource): Proble
     number,
     title,
     source,
-    code,
     language: "cpp",
     timeComplexity,
     spaceComplexity,
@@ -193,6 +213,8 @@ function buildProblem(path: string, code: string, source: ProblemSource): Proble
     leetcodeUrl: `https://leetcode.com/problems/${leetcodeSlug}/`,
     inNeetCode150,
     aiGenerated: false,
+    mySolution: { code, timeComplexity, spaceComplexity },
+    code,
     searchText,
   };
 }
@@ -200,12 +222,18 @@ function buildProblem(path: string, code: string, source: ProblemSource): Proble
 function buildAiProblem(ai: (typeof AI_SOLUTIONS)[number]): Problem | null {
   const nc = ncFullBySlug.get(ai.slug);
   if (!nc) return null; // only AI-cover known NeetCode 150 problems
+  const standard: StandardView = {
+    summary: ai.summary,
+    approach: ai.approach,
+    code: ai.code,
+    timeComplexity: ai.timeComplexity,
+    spaceComplexity: ai.spaceComplexity,
+  };
   return {
     routeSlug: `${nc.number}-${ai.slug}`,
     number: nc.number,
     title: nc.title,
     source: "neetcode",
-    code: ai.code,
     language: "cpp",
     timeComplexity: ai.timeComplexity,
     spaceComplexity: ai.spaceComplexity,
@@ -215,8 +243,8 @@ function buildAiProblem(ai: (typeof AI_SOLUTIONS)[number]): Problem | null {
     leetcodeUrl: `https://leetcode.com/problems/${ai.slug}/`,
     inNeetCode150: true,
     aiGenerated: true,
-    summary: ai.summary,
-    approach: ai.approach,
+    standard,
+    code: ai.code,
     searchText: [nc.title, `problem ${nc.number}`, nc.category, nc.difficulty, ai.summary, ai.code]
       .join(" ")
       .toLowerCase(),
@@ -254,6 +282,23 @@ export function getProblems(): Problem[] {
     if (!p || seen.has(p.routeSlug)) continue;
     seen.add(p.routeSlug);
     out.push(p);
+  }
+
+  // Attach AI-authored Standard Solutions (keyed by routeSlug) to file-based
+  // problems. AI-only problems already carry their standard (from AI_SOLUTIONS).
+  const standardByRoute = new Map(STANDARD_SOLUTIONS.map((s) => [s.routeSlug, s]));
+  for (const p of out) {
+    if (p.standard) continue;
+    const s = standardByRoute.get(p.routeSlug);
+    if (s) {
+      p.standard = {
+        summary: s.summary,
+        approach: s.approach,
+        code: s.code,
+        timeComplexity: s.timeComplexity,
+        spaceComplexity: s.spaceComplexity,
+      };
+    }
   }
 
   out.sort((a, b) => a.number - b.number || a.title.localeCompare(b.title));

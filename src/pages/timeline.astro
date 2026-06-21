@@ -1,0 +1,203 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import TypeBadge from "../components/TypeBadge.astro";
+import { href } from "../lib/url";
+import { getTimelineNotes } from "../lib/notes";
+import { sectionMeta, humanize } from "../data/sections";
+import { fmtDayHeading, dayKey, weekKey } from "../lib/format";
+import { breadcrumbLd } from "../lib/seo";
+
+const notes = await getTimelineNotes(); // newest first
+const now = new Date();
+
+// ---- Lightweight stats (computed at build, relative to build time) ----
+const DAY = 86400000;
+const within = (d: Date, days: number) => +now - +d <= days * DAY;
+const thisWeek = notes.filter((n) => within(n.createdAt, 7)).length;
+const thisMonth = notes.filter((n) => within(n.createdAt, 30)).length;
+const byType = {
+  concept: notes.filter((n) => n.type === "concept").length,
+  leetcode: notes.filter((n) => n.type === "leetcode").length,
+  other: notes.filter((n) => n.type === "other").length,
+};
+
+// Current streak: consecutive days (ending today, with a 1-day grace) that have ≥1 note.
+const activeDays = new Set(notes.map((n) => dayKey(n.createdAt)));
+function streak(): number {
+  const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (!activeDays.has(dayKey(cursor))) cursor.setDate(cursor.getDate() - 1); // grace: missed today
+  let count = 0;
+  while (activeDays.has(dayKey(cursor))) {
+    count++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return count;
+}
+const currentStreak = streak();
+
+const stats = [
+  { label: "This week", value: thisWeek },
+  { label: "This month", value: thisMonth },
+  { label: "Total notes", value: notes.length },
+  { label: "Day streak", value: currentStreak },
+];
+
+// All tags present, for the tag filter.
+const allTags = [...new Set(notes.flatMap((n) => n.entry.data.tags))].sort((a, b) => a.localeCompare(b));
+
+// Group notes by day (already newest-first); track week boundaries for a divider.
+interface Day { key: string; date: Date; notes: typeof notes; }
+const days: Day[] = [];
+for (const n of notes) {
+  const k = dayKey(n.createdAt);
+  const last = days[days.length - 1];
+  if (last && last.key === k) last.notes.push(n);
+  else days.push({ key: k, date: n.createdAt, notes: [n] });
+}
+
+const noteUrl = (n: (typeof notes)[number]) => href(`/${n.section}/${n.path}`);
+const sectionLabel = (slug: string) => sectionMeta(slug)?.title ?? humanize(slug);
+
+const jsonLd = [breadcrumbLd([{ name: "Timeline", url: href("/timeline") }])];
+---
+<BaseLayout title="Timeline" description="Everything I've studied, in chronological order — with type and tag filters and lightweight stats." jsonLd={jsonLd} wide>
+  <header class="mb-6">
+    <div class="flex items-center gap-3 flex-wrap">
+      <span class="text-3xl" aria-hidden="true">🗓️</span>
+      <h1 class="text-3xl sm:text-4xl font-bold">Timeline</h1>
+    </div>
+    <p class="mt-3 muted max-w-2xl">Every note in chronological order, grouped by day. Timestamps are durable — set in frontmatter or derived from each note's first git commit.</p>
+  </header>
+
+  <!-- Stats -->
+  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+    {stats.map((s) => (
+      <div class="card p-4 text-center">
+        <div class="text-2xl font-bold" style="color: var(--accent);">{s.value}</div>
+        <div class="text-xs muted mt-1">{s.label}</div>
+      </div>
+    ))}
+  </section>
+
+  {notes.length === 0 ? (
+    <p class="muted text-sm">No notes yet. Capture one with <code>npm run note -- "..."</code>.</p>
+  ) : (
+    <>
+      <!-- Filters -->
+      <section class="flex flex-wrap items-center gap-3 mb-6" data-filters>
+        <div class="inline-flex rounded-md border border-token text-xs overflow-hidden" role="group" aria-label="Filter by type">
+          {[
+            { key: "all", label: `All · ${notes.length}` },
+            { key: "concept", label: `Concept · ${byType.concept}` },
+            { key: "leetcode", label: `LeetCode · ${byType.leetcode}` },
+            { key: "other", label: `Other · ${byType.other}` },
+          ].map((t, i) => (
+            <button
+              type="button"
+              data-type-filter={t.key}
+              class:list={["px-2.5 py-1", i > 0 && "border-l border-token", t.key === "all" ? "font-medium" : "muted"]}
+              aria-pressed={t.key === "all" ? "true" : "false"}
+            >{t.label}</button>
+          ))}
+        </div>
+        {allTags.length > 0 && (
+          <label class="text-xs muted inline-flex items-center gap-1.5">
+            Tag:
+            <select data-tag-filter class="surface-elev border border-token rounded-md px-2 py-1 text-xs">
+              <option value="">All tags</option>
+              {allTags.map((t) => <option value={t}>{t}</option>)}
+            </select>
+          </label>
+        )}
+        <span class="text-xs muted ml-auto" data-result-count></span>
+      </section>
+
+      <!-- Day groups -->
+      <div class="grid gap-8" data-timeline>
+        {days.map((d) => (
+          <section data-day-group data-week={weekKey(d.date)}>
+            <h2 class="text-sm font-semibold mb-3">
+              <span>{fmtDayHeading(d.date)}</span>
+              <span class="muted font-normal ml-2">· {d.notes.length} {d.notes.length === 1 ? "note" : "notes"}</span>
+            </h2>
+            <ol class="grid gap-2 border-l-2 border-token pl-4">
+              {d.notes.map((n) => (
+                <li
+                  data-item
+                  data-type={n.type}
+                  data-tags={n.entry.data.tags.join(" ")}
+                >
+                  <a href={noteUrl(n)} class="card p-3 flex items-start gap-3 text-sm">
+                    <span class="flex-1 min-w-0">
+                      <span class="font-medium">{n.entry.data.title}</span>
+                      <span class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        {n.type !== "concept" && <TypeBadge type={n.type} />}
+                        <span class="badge badge-tag">{sectionLabel(n.section)}</span>
+                        {n.entry.data.tags.map((t) => <span class="badge badge-tag">{t}</span>)}
+                      </span>
+                    </span>
+                    <time class="muted text-xs whitespace-nowrap shrink-0" datetime={n.createdAt.toISOString()}>
+                      {n.createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </time>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
+      </div>
+
+      <p class="muted text-xs mt-10" data-empty-msg hidden>No notes match the current filters.</p>
+    </>
+  )}
+
+  <script>
+    // Client-side type + tag filtering. Items carry data-type / data-tags; day
+    // groups hide when all their items are filtered out. Pure show/hide — the
+    // server already rendered everything newest-first.
+    const root = document.querySelector("[data-timeline]");
+    const filters = document.querySelector("[data-filters]");
+    if (root && filters) {
+      const typeBtns = Array.from(filters.querySelectorAll<HTMLButtonElement>("[data-type-filter]"));
+      const tagSel = filters.querySelector<HTMLSelectElement>("[data-tag-filter]");
+      const countEl = filters.querySelector<HTMLElement>("[data-result-count]");
+      const emptyMsg = document.querySelector<HTMLElement>("[data-empty-msg]");
+      let typeFilter = "all";
+
+      const apply = () => {
+        const tag = tagSel?.value || "";
+        let shown = 0;
+        root.querySelectorAll<HTMLElement>("[data-day-group]").forEach((group) => {
+          let visibleInGroup = 0;
+          group.querySelectorAll<HTMLElement>("[data-item]").forEach((item) => {
+            const okType = typeFilter === "all" || item.dataset.type === typeFilter;
+            const tags = (item.dataset.tags || "").split(" ").filter(Boolean);
+            const okTag = !tag || tags.includes(tag);
+            const show = okType && okTag;
+            item.hidden = !show;
+            if (show) visibleInGroup++;
+          });
+          group.hidden = visibleInGroup === 0;
+          shown += visibleInGroup;
+        });
+        if (countEl) countEl.textContent = `${shown} shown`;
+        if (emptyMsg) emptyMsg.hidden = shown !== 0;
+      };
+
+      typeBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          typeFilter = btn.dataset.typeFilter || "all";
+          typeBtns.forEach((b) => {
+            const on = b === btn;
+            b.setAttribute("aria-pressed", String(on));
+            b.classList.toggle("muted", !on);
+            b.classList.toggle("font-medium", on);
+          });
+          apply();
+        });
+      });
+      tagSel?.addEventListener("change", apply);
+      apply();
+    }
+  </script>
+</BaseLayout>

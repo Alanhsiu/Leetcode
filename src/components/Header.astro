@@ -28,7 +28,8 @@ const referenceMenu: Item = {
     { label: "C++ Reference", path: "/reference" },
   ],
 };
-const nav: Item[] = [codingMenu, ...noteLinks, referenceMenu];
+const timelineLink: Item = { label: "Timeline", path: "/timeline" };
+const nav: Item[] = [codingMenu, ...noteLinks, referenceMenu, timelineLink];
 
 const current = Astro.url.pathname.replace(/\/$/, "");
 function isActive(path: string) {

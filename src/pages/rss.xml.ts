@@ -20,7 +20,7 @@ export async function GET(_context: APIContext) {
   return rss({
     title: `${SITE_NAME} — guides & notes`,
     description: SITE_DESCRIPTION,
-    // Channel link points at the project home (/Leetcode/), not the bare origin.
+    // Channel link points at the project home (/prepkit/), not the bare origin.
     site: absoluteUrl(href("/")),
     items,
     customData: "<language>en-us</language>",

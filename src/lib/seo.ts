@@ -12,16 +12,16 @@ import { getNoteInfos, getSectionViews } from "./notes";
 import { sectionMeta, groupMeta, humanize } from "../data/sections";
 import { href } from "./url";
 
-export const SITE_NAME = "DSA Interview Notes";
+export const SITE_NAME = "PrepKit";
 export const SITE_DESCRIPTION =
-  "A fast, visual, searchable collection of data-structures & algorithms interview notes, NeetCode 150 coverage, interactive algorithm visualizations, an in-browser code runner, and concept guides for Temporal, Mender, and Google Cloud.";
+  "A fast, searchable interview-prep platform: coding problems with canonical solutions you can run in the browser, interactive algorithm visualizations, system-design and behavioral notes, hands-on learning tracks, and cheat sheets — all extensible by dropping in a markdown file.";
 export const SITE_URL = "https://alanhsiu.github.io";
 
 /** A page known to the site, used for OG images, RSS and structured data. */
 export interface PageInfo {
   /** OG-image route key, e.g. "problems/1-two-sum" or "index". */
   key: string;
-  /** Site-relative href (already base-prefixed), e.g. "/Leetcode/problems/…". */
+  /** Site-relative href (already base-prefixed), e.g. "/prepkit/problems/…". */
   url: string;
   title: string;
   description: string;
@@ -35,7 +35,7 @@ const BASE = import.meta.env.BASE_URL;
 
 /**
  * Derive the OG-image route key for a page pathname. Mirrors how getAllPages()
- * builds its keys so the two never drift. "/Leetcode/problems/x/" -> "problems/x".
+ * builds its keys so the two never drift. "/prepkit/problems/x/" -> "problems/x".
  */
 export function ogKeyForPath(pathname: string): string {
   const base = BASE.endsWith("/") ? BASE.slice(0, -1) : BASE;

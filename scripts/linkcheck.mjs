@@ -6,7 +6,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const DIST = join(process.cwd(), "dist");
-const BASE = "/Leetcode";
+const BASE = "/prepkit";
 
 if (!existsSync(DIST)) {
   console.error("✗ dist/ not found — run `npm run build` first.");
@@ -59,7 +59,7 @@ for (const file of htmlFiles) {
     if (link.startsWith(BASE + "/") || link === BASE) {
       pathname = link.slice(BASE.length) || "/";
     } else if (link.startsWith("/")) {
-      // absolute but missing base — that's a bug (won't work under /Leetcode/)
+      // absolute but missing base — that's a bug (won't work under /prepkit/)
       broken.push({ file: relative(DIST, file), link, reason: "absolute path missing base" });
       continue;
     } else {

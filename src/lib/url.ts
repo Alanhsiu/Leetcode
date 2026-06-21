@@ -1,6 +1,6 @@
 // Always route internal links through the configured base path so the site
-// works both locally and under https://alanhsiu.github.io/Leetcode/.
-const BASE = import.meta.env.BASE_URL; // e.g. "/Leetcode/" or "/Leetcode"
+// works both locally and under https://alanhsiu.github.io/prepkit/.
+const BASE = import.meta.env.BASE_URL; // e.g. "/prepkit/" or "/prepkit"
 
 /** Join the site base with a path, collapsing duplicate slashes. */
 export function href(path = "/"): string {

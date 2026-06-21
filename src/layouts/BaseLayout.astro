@@ -30,7 +30,7 @@ const {
   noindex = false,
 } = Astro.props;
 
-const fullTitle = title === SITE_NAME ? title : `${title} · DSA Notes`;
+const fullTitle = title === SITE_NAME ? title : `${title} · ${SITE_NAME}`;
 const canonical = absoluteUrl(Astro.url.pathname);
 const ogImage = image ?? ogImageUrl(ogKeyForPath(Astro.url.pathname));
 const jsonLdList = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];

@@ -4,7 +4,7 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { remarkBaseLinks } from './src/lib/remark-base-links.mjs';
 
-const BASE = '/Leetcode';
+const BASE = '/prepkit';
 
 // https://astro.build/config
 export default defineConfig({

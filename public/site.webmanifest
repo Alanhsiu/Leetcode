@@ -1,16 +1,16 @@
 {
-  "name": "DSA Interview Notes",
-  "short_name": "DSA Notes",
-  "description": "Visual, searchable DSA interview notes, NeetCode 150 coverage, algorithm visualizations, an in-browser code runner, and concept guides.",
-  "start_url": "/Leetcode/",
-  "scope": "/Leetcode/",
+  "name": "PrepKit",
+  "short_name": "PrepKit",
+  "description": "An interview-prep platform: coding problems with runnable canonical solutions, algorithm visualizations, system-design & behavioral notes, learning tracks, and cheat sheets.",
+  "start_url": "/prepkit/",
+  "scope": "/prepkit/",
   "display": "standalone",
   "background_color": "#0b0f17",
   "theme_color": "#0b0f17",
   "icons": [
-    { "src": "/Leetcode/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
-    { "src": "/Leetcode/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/Leetcode/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/Leetcode/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/prepkit/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/prepkit/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/prepkit/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/prepkit/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

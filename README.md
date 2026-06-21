@@ -9,7 +9,8 @@ cram mode, per-item progress tracking, and a runnable playground on every proble
 
 - **Live:** https://alanhsiu.github.io/Leetcode/
 - **Stack:** [Astro](https://astro.build) 5 + TypeScript (static output), Tailwind CSS v4,
-  Shiki, Fuse.js, [CodeMirror 6](https://codemirror.net) (editor), MDX (guides).
+  Shiki, Fuse.js, [CodeMirror 6](https://codemirror.net) (editor), MDX (guides),
+  `@astrojs/sitemap` + `@astrojs/rss`, and `astro-og-canvas` for build-time social cards.
 - **Two top-level sections:** **Coding Interview** (problems, patterns, viz, cram, …)
   and **Learning** (Temporal, Mender, GCP tracks).
 
@@ -20,9 +21,11 @@ cram mode, per-item progress tracking, and a runnable playground on every proble
   Execution goes through one swappable client (`src/lib/runner.ts`); the default
   backend is the public **Wandbox** sandbox (the public Piston endpoint became
   whitelist-only in Feb 2026 — see [Code runner](#in-page-code-runner)).
-- **AI-drafted content.** Learning guides and the auto-generated problem "drivers"
-  are AI-authored and **unverified** — every one is tagged and listed in
-  `NEEDS_REVIEW.md`. Verify against official docs before relying on them.
+- **Content provenance.** Some NeetCode coverage and the learning guides were
+  originally AI-drafted; these were reviewed and the on-site "AI" markers removed.
+  `NEEDS_REVIEW.md` (§A, §F, §G) keeps the record of what was AI-authored. The
+  in-browser problem "drivers" are still synthesized heuristically and labelled
+  **unverified** in the "Run it" panel (see [auto-drivers](#problem-playgrounds-auto-drivers)).
 
 ## Content sources
 
@@ -60,6 +63,7 @@ src/
   lib/learning.ts       groups guide files into tracks (derives track from folder)
   lib/runner.ts         ⭐ ONE runCode() client; swappable backend (Wandbox default)
   lib/driver.ts         auto-generates a main() + sample input for a class Solution
+  lib/seo.ts            ⭐ SEO single-source: page list, OG route key, canonical URLs, JSON-LD
   lib/highlight.ts      Shiki dual-theme C++ highlighting (marked pipeline)
   lib/markdown.ts       marked + Shiki for cheat sheets / reference
   lib/patterns.ts       18 patterns ↔ which visualization each embeds
@@ -71,7 +75,11 @@ src/
   scripts/code-editor.ts  CodeMirror 6 factory (lazy-loaded by <CodeRunner>)
   scripts/progress.ts   localStorage progress (solved / review / confident)
   components/           Header, SearchOverlay, CodeRunner, CodeBlock, LevelBadge, Viz, …
-  pages/                routes (see below)
+  pages/                routes (see below) + open-graph/[...route].ts (OG images),
+                        rss.xml.ts, search-index.json.ts, 404.astro
+  assets/og/            bundled Inter fonts for OG cards · assets/icon-master.svg
+public/                 robots.txt, site.webmanifest, favicon set (generated)
+scripts/gen-icons.mjs   regenerate the favicon/app-icon set from icon-master.svg
 scripts/linkcheck.mjs   internal broken-link checker (used in CI)
 scripts/viz-smoke.mjs   fake-DOM test that steps every frame of every viz
 scripts/runner-test.mjs hermetic runner test (mocked fetch — no network)
@@ -89,6 +97,33 @@ scripts/driver-test.mjs hermetic driver-generator test over the C++ corpus
 - **Visualizations**: framework-free SVG, code-split, with play/pause/step/speed,
   keyboard control, and `prefers-reduced-motion` support. Auto-embedded per pattern.
 - **Dark mode** is the default; a no-flash inline script restores the saved theme.
+
+## SEO, social & discoverability
+
+All build-time and static — nothing runs at request time:
+
+- **Sitemap** via `@astrojs/sitemap` (`/sitemap-index.xml`; the OG images are excluded),
+  linked from every page and referenced in `robots.txt`.
+- **RSS** (`@astrojs/rss`) at `/rss.xml` — the article-like content (learning guides +
+  cheat sheets + C++ reference), linked via `<link rel="alternate">`.
+- **Per-page meta**: canonical URL, description, `og:*`/`twitter:*` (incl. `og:image`),
+  `og:site_name`/`og:locale`, and a `noindex` for the dashboard/404.
+- **Structured data** (JSON-LD): `WebSite` on the home page; `TechArticle` +
+  `BreadcrumbList` on problems, guides, cheat sheets and reference; `BreadcrumbList`
+  on pattern pages.
+- **Social cards**: one 1200×630 PNG per page, generated at build time by
+  `astro-og-canvas` (canvaskit-wasm) from `src/lib/seo.ts`'s page list, using bundled
+  Inter fonts (`src/assets/og/`) so the build is **offline/hermetic**. Served at
+  `/open-graph/<route>.png`; `BaseLayout` derives the same route key per page.
+- **Favicons / PWA**: a full icon set (`favicon.svg` + `.ico` + 16/32/180/192/512 PNGs +
+  maskable) and `site.webmanifest`, all generated from one master SVG by
+  `node scripts/gen-icons.mjs`.
+- **404**: a static `src/pages/404.astro` with section links (GitHub Pages serves it
+  for unknown paths).
+
+> `src/lib/seo.ts` is the single source of truth for the site identity, the OG route
+> key, canonical/absolute URLs, the full page list, and the JSON-LD builders — the
+> sitemap filter, RSS feed, OG route, and per-page structured data all read from it.
 
 ## In-page code runner
 
@@ -209,8 +244,8 @@ and redeploys the site automatically.
 LeetCode problem **statements** are copyrighted and are **not** reproduced. Pages
 show only facts (number, title, difficulty, pattern), a link to the official
 problem, my own notes/solutions, and — for problems I haven't written up — short
-**original** summaries plus an AI-authored solution clearly badged
-**“AI-generated”** and listed in `NEEDS_REVIEW.md`.
+**original** summaries plus a solution. The provenance of any originally
+AI-authored coverage is recorded in `NEEDS_REVIEW.md`.
 
 ## See also
 

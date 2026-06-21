@@ -270,3 +270,86 @@ The existing `deploy.yml` then builds + publishes to GitHub Pages. (One-time, if
 already set: repo **Settings → Pages → Source = "GitHub Actions"**.) To run code through
 your own backend instead of the public sandbox, edit the `RUNNER` map in
 `src/lib/runner.ts` (see README → "Swapping the execution backend").
+
+---
+---
+
+# PART D — Discoverability + polish (branch `chore/seo-and-polish`)
+
+A bounded, **technical-only** pass over the finished site: SEO, social cards, a11y,
+performance, and polish. **No new notes/guides/problems and no new factual claims.** The
+four read-only folders stayed untouched; `main` untouched; build green throughout.
+
+## Phase 17 — Remove AI markers ✅
+- Removed the on-page "⚠ AI-generated"/"⚠ AI-drafted"/"AI" badges and banners from
+  problem pages, learning track + guide pages, `/cram`, and `/learning` (content was
+  reviewed by the owner). Kept the actual summary/approach **content**; only the warning
+  framing was dropped. Later (Phase 21) also removed the "AI-drafted and not yet verified"
+  sentences from the three track-landing `index.md` files.
+- The `aiGenerated` frontmatter + `aiSolutions*.ts` data remain as inert metadata;
+  `NEEDS_REVIEW.md` §A/§F/§G keep the provenance record.
+
+## Phase 18 — SEO foundation + social cards + favicons + 404 ✅
+- `@astrojs/sitemap` → `/sitemap-index.xml` (OG images filtered out), linked from every
+  page and in a new `public/robots.txt`.
+- RSS (`@astrojs/rss`) at `/rss.xml`: learning guides + cheat sheets + reference (43 items).
+- New `src/lib/seo.ts`: site identity, canonical/absolute URLs, the OG route key, the
+  full page list, and JSON-LD builders — one source of truth.
+- `BaseLayout` head rewritten: canonical, `og:*`/`twitter:*` (+ `og:image`),
+  `og:site_name`/`og:locale`, `noindex` support, sitemap + RSS links, favicon/manifest links.
+- JSON-LD: `WebSite` (home), `TechArticle` + `BreadcrumbList` (problems, guides, cheat
+  sheets, reference), `BreadcrumbList` (patterns).
+- Build-time OG cards via `astro-og-canvas` — `src/pages/open-graph/[...route].ts`,
+  264 PNGs, bundled Inter fonts (offline/hermetic).
+- Full favicon/app-icon set + `site.webmanifest` from one master SVG via
+  `scripts/gen-icons.mjs`; a proper `404.astro`. Added per-page meta descriptions to the
+  section indexes that lacked them. Build 264 pages green.
+
+## Phase 19 — Performance ✅
+- **Lazy-load Fuse.js**: dynamic `import("fuse.js")` on first search open. Every page's
+  initial JS dropped from ~29 KB to **~2.4 KB** (Fuse is now a 26.7 KB on-demand chunk).
+- CodeMirror (≈636 KB) was already lazy/code-split; viz chunks already per-pattern.
+- Reserved viz-mount height while empty → problem-page **CLS 0.133 → 0.004**.
+- Lighthouse (desktop) after: home/problem/guide/playground/cheatsheet **100/100/100/100**.
+  Before: home 100/95/100/100, problem 95/96/100/100, playground 100/96/100/100.
+
+## Phase 20 — Accessibility ✅
+- Added `--accent-solid` (#4f46e5) for white-on-accent fills (CTA, logo, skip link, Run
+  button) — AA in both themes (dark accent was 2.98:1 with white).
+- Light-mode `--accent` → indigo-600 and darker difficulty-badge text → AA on white/tints.
+- Lightened the github-dark Shiki **comment** token (#6A737D → #8B949E) — was 3.9:1.
+- `aria-label` on the CodeMirror editable region (named ARIA textbox); neutralized the
+  card hover-lift under `prefers-reduced-motion`; verified one `<h1>`/page, no skipped
+  heading levels, and reduced-motion suppression of viz auto-play. Contrast ratios were
+  computed by hand for **both** themes (Lighthouse only tests the default dark theme).
+
+## Phase 21 — Self-review loop ✅
+- Looped build → check → tests → link-check → Lighthouse (desktop **and** mobile) → fix.
+- Mobile Lighthouse: home/problem/neetcode150/learning/dashboard all **100/100/100/100**,
+  tap-targets pass.
+- Final suite green: `astro check` 0 errors; viz 18/18; runner 10/10; driver OK; build
+  **264 pages**; link-check **11,921 links / 0 broken**; **0** AI-draft markers in any
+  rendered page. Verified sitemap/RSS/robots/OG (264 PNGs)/JSON-LD/favicons all generate.
+- Existing features intact: search, filters, progress/dashboard, cram, visualizations,
+  code runner, problem drivers, learning guides.
+
+---
+
+## SUMMARY — Discoverability + polish (Part D)
+
+On `chore/seo-and-polish`, a technical-only pass (no new content/claims):
+**SEO** (sitemap, RSS, robots, canonical, per-page meta, schema.org JSON-LD), **static
+social cards** (per-page OG/Twitter PNGs, offline), **performance** (lazy Fuse −26.6 KB/page,
+CLS 0.133→0.004), **accessibility** (AA contrast in both themes, named editor, reduced-motion),
+and **polish** (404, full favicon/PWA set, clean mobile). Lighthouse desktop + mobile are
+100/100/100/100 across page types. The four content folders and `main` are untouched.
+
+### Merge (your move — `main` untouched)
+```bash
+git checkout main && git merge chore/seo-and-polish && git push origin main
+```
+The existing `deploy.yml` rebuilds + publishes to GitHub Pages. After deploy, submit
+`https://alanhsiu.github.io/Leetcode/sitemap-index.xml` in Google Search Console (a
+project-site `robots.txt` lives under `/Leetcode/` and isn't read from the domain root —
+see `NEEDS_REVIEW.md` §G). Re-run `node scripts/gen-icons.mjs` only if the master icon
+SVG changes.

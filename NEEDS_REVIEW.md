@@ -98,3 +98,29 @@ docs** before relying on them.
 Specific things to sanity-check: Temporal timeout names/semantics and versioning
 guidance; Mender state-script state names and delta trade-offs; GCP `gcloud`/`bq` flags,
 storage-class minimums, and any cost statements.
+
+## G. Discoverability + polish pass (branch `chore/seo-and-polish`) — judgment calls
+Purely technical SEO/a11y/perf polish; **no new content or claims** were authored.
+
+- **"AI-drafted"/"AI-generated" markers removed at your request** ("I already
+  checked"). Removed: the on-page badges/banners (problem pages, learning track +
+  guide pages, `/cram`, `/learning`) and the "AI-drafted and not yet verified"
+  sentences in the three track-landing `index.md` files. The `aiGenerated: true`
+  **frontmatter and `aiSolutions*.ts` data remain** as inert metadata (no longer
+  rendered anywhere) — §A and §F above still list what was originally AI-authored,
+  so this file stays the record of provenance even though the site no longer says so.
+  The problem-page "Run it" driver caveat ("auto-generated… unverified", §E) is a
+  separate, still-accurate note about the synthesized test harness and was **kept**.
+- **robots.txt** sits at `/Leetcode/robots.txt`. Crawlers read `robots.txt` from the
+  **domain root** (`alanhsiu.github.io/robots.txt`), which belongs to your user/root
+  Pages site, not this project. The `sitemap-index.xml` is still discoverable via the
+  `<link rel="sitemap">` in every page and can be submitted directly in Search Console.
+- **OG/social images** are generated at build time with `astro-og-canvas`
+  (canvaskit-wasm) using **bundled Inter fonts** (`src/assets/og/`), so the build is
+  hermetic/offline. One 1200×630 PNG per page (264). Re-run `node scripts/gen-icons.mjs`
+  only if the master icon SVG changes; OG images regenerate automatically on build
+  (cached under `node_modules/.astro-og-canvas`).
+- **Contrast:** light-mode accent darkened to indigo-600 and difficulty-badge text
+  darkened so all text clears WCAG AA in **both** themes; the github-dark Shiki comment
+  token was lightened (it was 3.9:1 on the dark code bg). Ratios were computed by hand
+  for light mode (Lighthouse only exercises the default dark theme).

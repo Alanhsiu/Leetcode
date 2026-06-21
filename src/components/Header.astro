@@ -1,29 +1,42 @@
 ---
 import { href } from "../lib/url";
+import { notesSections } from "../data/sections";
 
-const nav = [
-  { label: "Problems", path: "/problems" },
-  { label: "NeetCode 150", path: "/neetcode150" },
-  { label: "Patterns", path: "/patterns" },
-  { label: "Visualizations", path: "/visualizations" },
-  { label: "Playground", path: "/playground" },
-  { label: "Cheat Sheets", path: "/cheatsheets" },
-  { label: "Reference", path: "/reference" },
-  { label: "Cram", path: "/cram" },
-  { label: "Dashboard", path: "/dashboard" },
-];
+// Grouped, responsive nav. Two dropdown menus (Coding, Reference) collapse the long
+// flat list so nothing overflows at any width; the notes sections (System Design,
+// Behavioral, Learning, …) come straight from the section registry, so a new section
+// folder appears here automatically. Dashboard lives in the right-hand cluster.
+type Leaf = { label: string; path: string };
+type Item = Leaf | { label: string; children: Leaf[] };
 
-// Top-level sections. "Coding Interview" is the existing material (above);
-// "Learning" is the new multi-track platform.
-const sections = [
-  { label: "Learning", path: "/learning" },
-];
+const codingMenu: Item = {
+  label: "Coding",
+  children: [
+    { label: "Problems", path: "/problems" },
+    { label: "NeetCode 150", path: "/neetcode150" },
+    { label: "Patterns", path: "/patterns" },
+    { label: "Visualizations", path: "/visualizations" },
+    { label: "Playground", path: "/playground" },
+    { label: "Cram", path: "/cram" },
+  ],
+};
+const noteLinks: Item[] = notesSections().map((s) => ({ label: s.title, path: `/${s.slug}` }));
+const referenceMenu: Item = {
+  label: "Reference",
+  children: [
+    { label: "Cheat Sheets", path: "/cheatsheets" },
+    { label: "C++ Reference", path: "/reference" },
+  ],
+};
+const nav: Item[] = [codingMenu, ...noteLinks, referenceMenu];
 
 const current = Astro.url.pathname.replace(/\/$/, "");
 function isActive(path: string) {
   const target = href(path).replace(/\/$/, "");
   return current === target || current.startsWith(target + "/");
 }
+const isItemActive = (it: Item) =>
+  "children" in it ? it.children.some((c) => isActive(c.path)) : isActive(it.path);
 ---
 
 <header class="sticky top-0 z-40 backdrop-blur border-b border-token" style="background: color-mix(in srgb, var(--bg) 85%, transparent);">
@@ -33,47 +46,80 @@ function isActive(path: string) {
       <span class="hidden sm:inline">DSA Notes</span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-1 ml-2 text-sm overflow-x-auto" aria-label="Primary">
-      {nav.map((n) => (
-        <a
-          href={href(n.path)}
-          class:list={["px-2.5 py-1.5 rounded-md whitespace-nowrap hover:text-[var(--accent)]", isActive(n.path) && "text-[var(--accent)] font-semibold"]}
-          aria-current={isActive(n.path) ? "page" : undefined}
-        >{n.label}</a>
-      ))}
-      <span class="mx-1 w-px h-5 self-center" style="background: var(--border);" aria-hidden="true"></span>
-      {sections.map((n) => (
-        <a
-          href={href(n.path)}
-          class:list={["px-2.5 py-1.5 rounded-md whitespace-nowrap font-semibold hover:text-[var(--accent)]", isActive(n.path) && "text-[var(--accent)]"]}
-          aria-current={isActive(n.path) ? "page" : undefined}
-        >{n.label}</a>
+    <nav class="hidden lg:flex items-center gap-1 ml-2 text-sm" aria-label="Primary">
+      {nav.map((it) => (
+        "children" in it ? (
+          <div class="nav-group relative">
+            <button
+              type="button"
+              class:list={["nav-trigger px-2.5 py-1.5 rounded-md inline-flex items-center gap-1 hover:text-[var(--accent)]", isItemActive(it) && "text-[var(--accent)] font-semibold"]}
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              {it.label}
+              <span class="text-[0.65rem] muted" aria-hidden="true">▾</span>
+            </button>
+            <div class="nav-menu absolute left-0 top-full pt-1 min-w-44" role="menu">
+              <div class="surface-elev border border-token rounded-lg shadow-lg p-1.5 grid gap-0.5">
+                {it.children.map((c) => (
+                  <a
+                    href={href(c.path)}
+                    role="menuitem"
+                    class:list={["block px-3 py-1.5 rounded-md whitespace-nowrap hover:bg-[var(--bg-card)]", isActive(c.path) && "text-[var(--accent)] font-semibold"]}
+                    aria-current={isActive(c.path) ? "page" : undefined}
+                  >{c.label}</a>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <a
+            href={href(it.path)}
+            class:list={["px-2.5 py-1.5 rounded-md whitespace-nowrap hover:text-[var(--accent)]", isActive(it.path) && "text-[var(--accent)] font-semibold"]}
+            aria-current={isActive(it.path) ? "page" : undefined}
+          >{it.label}</a>
+        )
       ))}
     </nav>
 
     <div class="flex items-center gap-1.5 ml-auto">
+      <a href={href("/dashboard")} class:list={["viz-btn !px-2.5 hidden sm:inline-flex", isActive("/dashboard") && "text-[var(--accent)]"]} title="Progress dashboard" aria-label="Progress dashboard">
+        <span aria-hidden="true">📊</span>
+        <span class="hidden xl:inline muted text-xs">Dashboard</span>
+      </a>
       <button id="search-open" class="viz-btn !px-2.5" aria-label="Search (press /)" title="Search ( / )">
         <span aria-hidden="true">🔍</span>
-        <span class="hidden lg:inline muted text-xs">Search</span>
-        <kbd class="hidden lg:inline text-[0.65rem] muted border-token border rounded px-1">/</kbd>
+        <span class="hidden xl:inline muted text-xs">Search</span>
+        <kbd class="hidden xl:inline text-[0.65rem] muted border-token border rounded px-1">/</kbd>
       </button>
       <button id="theme-toggle" class="viz-btn !px-2.5" aria-label="Toggle dark mode" title="Toggle theme">
         <span class="dark:hidden" aria-hidden="true">🌙</span>
         <span class="hidden dark:inline" aria-hidden="true">☀️</span>
       </button>
-      <button id="mobile-menu-btn" class="viz-btn !px-2.5 md:hidden" aria-label="Open menu" aria-expanded="false">☰</button>
+      <button id="mobile-menu-btn" class="viz-btn !px-2.5 lg:hidden" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">☰</button>
     </div>
   </div>
 
-  <!-- Mobile nav -->
-  <nav id="mobile-menu" class="md:hidden hidden border-t border-token px-4 py-2 flex-col gap-1 text-sm" aria-label="Mobile">
-    {nav.map((n) => (
-      <a href={href(n.path)} class:list={["block px-2 py-2 rounded-md", isActive(n.path) && "text-[var(--accent)] font-semibold"]}>{n.label}</a>
+  <!-- Mobile nav: accordion of the same sections -->
+  <nav id="mobile-menu" class="lg:hidden hidden border-t border-token px-4 py-2 text-sm" aria-label="Mobile">
+    {nav.map((it) => (
+      "children" in it ? (
+        <details class="border-b border-token last:border-0">
+          <summary class:list={["flex items-center justify-between px-2 py-2.5 cursor-pointer list-none", isItemActive(it) && "text-[var(--accent)] font-semibold"]}>
+            <span>{it.label}</span>
+            <span class="text-xs muted" aria-hidden="true">▾</span>
+          </summary>
+          <div class="pb-2 pl-3 grid gap-0.5">
+            {it.children.map((c) => (
+              <a href={href(c.path)} class:list={["block px-2 py-2 rounded-md", isActive(c.path) && "text-[var(--accent)] font-semibold"]}>{c.label}</a>
+            ))}
+          </div>
+        </details>
+      ) : (
+        <a href={href(it.path)} class:list={["block px-2 py-2.5 border-b border-token last:border-0", isActive(it.path) && "text-[var(--accent)] font-semibold"]}>{it.label}</a>
+      )
     ))}
-    <span class="my-1 h-px" style="background: var(--border);" aria-hidden="true"></span>
-    {sections.map((n) => (
-      <a href={href(n.path)} class:list={["block px-2 py-2 rounded-md font-semibold", isActive(n.path) && "text-[var(--accent)]"]}>{n.label}</a>
-    ))}
+    <a href={href("/dashboard")} class:list={["block px-2 py-2.5 sm:hidden", isActive("/dashboard") && "text-[var(--accent)] font-semibold"]}>Dashboard</a>
   </nav>
 </header>
 
@@ -85,6 +131,31 @@ function isActive(path: string) {
     try { localStorage.setItem("theme", isDark ? "dark" : "light"); } catch {}
   });
 
+  // Desktop dropdowns: hover/focus open via CSS; JS adds click-toggle (touch),
+  // Escape-to-close, outside-click-close, and keeps aria-expanded in sync.
+  const groups = Array.from(document.querySelectorAll<HTMLElement>(".nav-group"));
+  function closeAll(except?: HTMLElement) {
+    for (const g of groups) {
+      if (g === except) continue;
+      g.removeAttribute("data-open");
+      g.querySelector(".nav-trigger")?.setAttribute("aria-expanded", "false");
+    }
+  }
+  for (const g of groups) {
+    const trigger = g.querySelector<HTMLButtonElement>(".nav-trigger");
+    trigger?.addEventListener("click", (e) => {
+      e.preventDefault();
+      const open = g.hasAttribute("data-open");
+      closeAll(g);
+      if (open) { g.removeAttribute("data-open"); trigger.setAttribute("aria-expanded", "false"); }
+      else { g.setAttribute("data-open", ""); trigger.setAttribute("aria-expanded", "true"); }
+    });
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAll(); });
+  document.addEventListener("click", (e) => {
+    if (!(e.target as HTMLElement).closest(".nav-group")) closeAll();
+  });
+
   // Mobile menu
   const menuBtn = document.getElementById("mobile-menu-btn");
   const menu = document.getElementById("mobile-menu");
@@ -92,7 +163,7 @@ function isActive(path: string) {
     const hidden = menu?.classList.toggle("hidden");
     menuBtn.setAttribute("aria-expanded", String(hidden === false));
   });
-  // Close the mobile menu after following a link.
+  // Close the mobile menu after following a link (but not when toggling a group).
   menu?.addEventListener("click", (e) => {
     if ((e.target as HTMLElement).tagName === "A") menu.classList.add("hidden");
   });

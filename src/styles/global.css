@@ -344,3 +344,14 @@ html.dark .astro-code span[style*="6A737D"] {
   background: var(--accent-solid); color: white; padding: 0.6rem 1rem; border-radius: 0 0 0.4rem 0;
 }
 .skip-link:focus { left: 0; }
+
+/* Header dropdown menus: hidden by default; shown on hover, keyboard focus within
+   the group, or when JS marks it open (touch/click). See Header.astro. */
+.nav-menu { display: none; }
+.nav-group:hover > .nav-menu,
+.nav-group:focus-within > .nav-menu,
+.nav-group[data-open] > .nav-menu { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .nav-menu { animation: nav-fade 0.12s ease-out; }
+}
+@keyframes nav-fade { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }

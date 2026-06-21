@@ -19,16 +19,18 @@ const patternCards = PATTERNS.map((p) => ({
 <BaseLayout wide description={SITE_DESCRIPTION} jsonLd={websiteLd()}>
   <!-- Hero -->
   <section class="text-center py-10 sm:py-16">
-    <p class="text-sm font-semibold uppercase tracking-widest" style="color: var(--accent);">Interview Prep</p>
-    <h1 class="mt-3 text-4xl sm:text-5xl font-extrabold tracking-tight">Data Structures &amp; Algorithms, visualized.</h1>
+    <p class="text-sm font-semibold uppercase tracking-widest" style="color: var(--accent);">Interview Prep Platform</p>
+    <h1 class="mt-3 text-4xl sm:text-5xl font-extrabold tracking-tight">Prep for the whole interview.</h1>
     <p class="mt-4 max-w-2xl mx-auto muted text-lg">
-      My personal C++ solutions and cheat sheets — searchable, tagged by pattern, with interactive
-      animations so you can re-grok any algorithm in seconds.
+      Coding, system design, behavioral, and hands-on learning tracks — in one searchable place.
+      Worked solutions you can run in the browser, interactive algorithm visualizations, and
+      concept notes anyone can extend by dropping in a markdown file.
     </p>
     <div class="mt-7 flex flex-wrap gap-3 justify-center">
-      <a href={href("/problems")} class="viz-btn !px-5 !py-2.5 !text-sm" style="background: var(--accent-solid); color: #fff; border-color: var(--accent-solid);">Browse problems →</a>
-      <a href={href("/visualizations")} class="viz-btn !px-5 !py-2.5 !text-sm">Watch visualizations</a>
-      <a href={href("/cram")} class="viz-btn !px-5 !py-2.5 !text-sm">Cram mode</a>
+      <a href={href("/problems")} class="viz-btn !px-5 !py-2.5 !text-sm" style="background: var(--accent-solid); color: #fff; border-color: var(--accent-solid);">Coding problems →</a>
+      <a href={href("/system-design")} class="viz-btn !px-5 !py-2.5 !text-sm">System design</a>
+      <a href={href("/behavioral")} class="viz-btn !px-5 !py-2.5 !text-sm">Behavioral</a>
+      <a href={href("/visualizations")} class="viz-btn !px-5 !py-2.5 !text-sm">Visualizations</a>
     </div>
   </section>
 

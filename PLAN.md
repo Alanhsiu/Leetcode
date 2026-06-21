@@ -1,194 +1,188 @@
-# PLAN — Online IDE + Multi-Track Learning Platform
+# PLAN — PrepKit v2 platform
 
-Branch: `feature/online-ide-and-learning`. Builds on the existing Astro 5 + TS static
-site (GitHub Pages, base `/Leetcode/`). Two goals: **(A)** an in-page code runner so
-visitors can run code and see output without leaving the site, and **(B)** generalize
-the content model into a multi-track learning platform (new tracks: Temporal, Mender,
-GCP). Optimize for clean, reusable architecture and quality. The original site-rebuild
-plan (Phases 0–7) is preserved in **Appendix A** below.
+> Transform the existing Astro 5 + TypeScript static site (formerly "DSA Notes", a
+> LeetCode-focused notes site) into **PrepKit**, a general-purpose interview-prep
+> platform. Branch `feature/v2-platform`. `main` untouched — owner merges. Build stays
+> green; commit per phase; CI hermetic (no execution-API calls in build/CI).
+>
+> Earlier rebuild history (the original Astro migration, the code runner, the learning
+> platform, and the SEO/polish pass) lives in `PROGRESS.md`. This file is the plan for the
+> v2-platform transformation only.
 
-## Absolute rules (carried from the brief)
-1. The four content folders — `NeetCode 150/`, `Misc/`, `Interview Cheat Sheet/`,
-   `CommonUsage/` — are **READ-ONLY**. Read only; never write. New content goes in new
-   folders (`content/learning/...`).
-2. Work only on `feature/online-ide-and-learning`. Never push/merge `main`.
-3. Build stays green; commit per phase; never commit a broken build.
-4. No backend, no server, no paid services. Stays a static GitHub Pages site.
-5. Any learning content the agent authors is frontmatter-tagged `aiGenerated: true` and
-   listed in `NEEDS_REVIEW.md`. Auto-generated problem drivers are likewise unverified.
+## Goal & guardrails
 
----
-
-## Provider decision (Part A) — confirmed against live docs/endpoints, 2026-06-20
-
-The brief defaulted to the public **Piston** API and said to *confirm the endpoint
-first*. I did:
-
-- **Piston (emkc.org)** `GET /runtimes` → 200, but `POST /execute` → **HTTP 401:
-  "Public Piston API is now whitelist only as of 2/15/2026."** Unusable without a
-  whitelist, and we can't self-host (no backend allowed).
-- **Wandbox** (`wandbox.org/api/compile.json`) → `Access-Control-Allow-Origin: *`;
-  uniformly executes **C++ (gcc-13.2.0), Python (cpython-3.13.8), JS (nodejs-20.17.0)**
-  with one request/response shape. Verified live (hello-world per language, stdin
-  honored). Browser calls use `Content-Type: text/plain` to stay a CORS *simple
-  request* (no preflight) — Wandbox parses the JSON body regardless; verified.
-- **Godbolt** (`godbolt.org/api`) → CORS `*` and allows `Content-Type`; executes C++
-  well but **cannot execute JavaScript** (0 executors) and only offers MicroPython.
-  Kept as a C++-only alternative adapter.
-
-**Decision:** default provider = **Wandbox**, behind a swappable abstraction. Adapters
-shipped: `wandbox` (default), `godbolt` (C++ alt), `piston` (configurable base URL — the
-brief's named swap target for a self-hosted/whitelisted instance). Swapping the backend
-= editing one config object in `src/lib/runner.ts`. Logged in `NEEDS_REVIEW.md`.
-
-Runtime is the **only** time the API is called — from the visitor's browser. The build,
-tests, and CI never call it (hermetic).
+- **Brand:** display name **PrepKit**; repo slug **prepkit**; `base: '/prepkit'`,
+  `site: 'https://alanhsiu.github.io'`.
+- **Preserve every original note.** The four former content folders ("NeetCode 150",
+  "Misc", "Interview Cheat Sheet", "CommonUsage") are now editable — relocate with
+  `git mv` so history is kept; never lose content.
+- **Copyright:** never reproduce LeetCode statements verbatim. Original short summaries +
+  official link only. Facts (title/number/difficulty/pattern) are fine.
+- **Provenance:** no on-page "AI" badges; record the source of every standard answer
+  (mine vs AI-generated) in `NEEDS_REVIEW.md` for batch verification.
 
 ---
 
-## Part A — In-page code runner
+## 1. New section / content model
 
-**A.1 Abstraction — `src/lib/runner.ts`.** One public function
-`runCode({ language, version?, files, stdin? }) → Promise<RunResult>` where
-`RunResult = { stdout, stderr, exitCode, signal?, compileMessage?, timeMs, ok, provider }`.
-Internals: a `Provider` interface + `wandbox`/`godbolt`/`piston` adapters and a single
-`RUNNER` config mapping each language → `{ provider, id }`. Languages normalized to
-`cpp | python | javascript`. Typed errors (network / rate-limit / non-200 / timeout);
-`timeMs` is client-measured elapsed (round-trip incl. network — labeled honestly, since
-no free provider returns CPU time).
+PrepKit is organized into top-level **sections**. Two kinds:
 
-**A.2 `<CodeRunner>` — `src/components/CodeRunner.astro`.** Reusable island:
-CodeMirror 6 editor + optional stdin box + Run + Reset + output pane
-(stdout / stderr / exit code / elapsed) + language label + a "runs in a public sandbox
-(Wandbox)" note. **CodeMirror 6** over Monaco: far smaller, tree-shakeable, no web-worker
-/CDN requirement — right for a static SSG island. Loaded via dynamic `import()` so it is
-code-split and only fetched when a runner is actually used; a plain `<textarea>` is the
-no-JS / pre-hydration fallback. Theme-aware (dark/light), debounced, Run disabled while a
-job is in flight, friendly error messages, `aria-live` output, keyboard-operable.
+| Section | Kind | Source | Notes |
+|---|---|---|---|
+| **Coding** | specialized | `coding/**/*.cpp` (glob pipeline) + curated metadata | Problems, NeetCode 150, Patterns, Visualizations, Playground, Cram, Dashboard. Keeps its own coding-specific intro. |
+| **System Design** | notes | `content/system-design/**/*.{md,mdx}` | Drop-in markdown notes. |
+| **Behavioral** | notes | `content/behavioral/**/*.{md,mdx}` | Drop-in markdown notes. |
+| **Learning** | notes | `content/learning/<track>/**` | Existing multi-track guides (Temporal/Mender/GCP). |
+| **Reference** | reference | `reference/cheatsheets/**` + `reference/cpp/*.md` (glob pipeline) | Relocated Interview Cheat Sheet + CommonUsage. |
 
-**A.3 LeetCode playground — `src/lib/driver.ts`.** Parse the first public method of
-`class Solution` (return type, name, params). Generate a `main()` that builds a sample
-input for supported types (`int/long/double/bool/char/string`, `vector<…>` 1-D/2-D of
-those) and prints the result; unsupported signatures (`TreeNode*`, `ListNode*`, custom
-structs) get a *compiling* stub `main()` that prints guidance instead of a broken build.
-Returns `{ runnable, fullCode, stdin, generated, note }`. Each problem page gains a
-collapsible **"Run it"** playground (CodeRunner preloaded with solution + driver + one
-sample input), lazy-mounted on open; the canonical Shiki "My solution" view stays primary.
-Drivers + sample inputs are **unverified** → tagged and described in `NEEDS_REVIEW.md`.
-Infra/CLI snippets (GCP `gcloud`, etc.) are **never** fake-executed — read-only code block
-+ copy (existing `CodeBlock`).
+### The ONE documented "notes" structure (System Design, Behavioral, Learning)
 
-## Part B — Multi-track learning platform
+A single generalized **`notes`** Content-Layer collection replaces the `learning`-only
+collection. It globs `content/**/*.{md,mdx}`. For any file `content/<section>/<...>/<name>.md`:
 
-**B.1 Content model.** New content type **guide** via Astro 5's **Content Layer**
-(`glob` loader over `content/learning/**/*.md`, zod-validated frontmatter:
-`title, description, track, level, tags, order, aiGenerated`). **Tracks** = subfolders of
-`content/learning/`; an optional `index.md` provides the landing intro; `src/data/tracks.ts`
-holds order/icon/blurb with a humanized-folder fallback. Zero-wiring: drop a `.md` in a
-track folder → it appears (TOC, search, nav). New track = new folder (+ optional registry
-entry). The four protected folders are untouched.
+- **section** = first path segment (or frontmatter `section:` override).
+- **group** (optional) = second-level folder when the note is nested
+  (`content/<section>/<group>/<name>.md`); flat sections simply omit it. This generalizes
+  Learning's "track" concept to all sections — a track is just a group.
+- **landing** = `<section>/index.md` (section intro) and `<section>/<group>/index.md`
+  (group intro), surfaced as the auto-outline header.
+- **frontmatter** (zod-validated): `title` (required), `description`, `level?`
+  (Beginner/Intermediate/Advanced), `order` (sort), `tags[]`, `aiGenerated`, plus optional
+  `section`/`group` overrides.
 
-**B.2 Routes & nav.** `/learning` (hub: track cards), `/learning/<track>` (landing +
-outline/TOC + level badges), `/learning/<track>/<guide>` (rendered guide, reusing the
-problem-page reading experience). Top-level nav gains **Learning** alongside the existing
-"Coding Interview" items; homepage gains a Learning section.
+**Zero-wiring rule:** drop a `.md`/`.mdx` file into a section folder → a page appears with
+no code changes. Create a new top-level folder under `content/` → a new section appears in
+nav and on the home page (with a humanized title fallback if it has no registry entry).
+A `sections.ts` registry supplies nice title/blurb/icon/order; missing entries fall back
+gracefully. Documented in README → "Add a note / add a section".
 
-**B.3 Reuse across both content types.** Search (`guide` docs added to
-`/search-index.json`), tags + a `LevelBadge` reusing the badge CSS, progress tracking
-(`progress.ts` is slug-keyed — works for guides as-is) + dashboard, cram/quick-review
-(guides section), and visualizations embeddable in guide markdown via a ` ```viz ` fenced
-block → `data-viz-mount` (same loader).
+### Routes
 
-**B.4 Three tracks (aiGenerated starter content).**
-- **Temporal** — durable execution: what/why, Workflows & Activities, Workers & Task
-  Queues, Retries/Timeouts, Signals & Queries. SDK code = read-only (needs a server);
-  CodeRunner only for self-contained illustrations.
-- **Mender** — embedded OTA: concepts, Artifacts, Deployments, state scripts, delta.
-  Mostly conceptual + CLI/yaml (read-only).
-- **GCP** — Cloud Run, GKE, Pub/Sub, Cloud Storage, IAM, BigQuery. `gcloud`/`bq` are
-  read-only code blocks + copy (never fake-run).
+One generic set of dynamic routes powers every notes section (replacing the
+`/learning/*`-specific pages, but keeping the same URL shapes so links/SEO are stable):
 
-## Part C — CI/CD & docs
+- `/[section]` — section hub (landing intro + auto outline of groups → notes).
+- `/[section]/[...slug]` — a note, or a group landing.
 
-Extend CI: add hermetic Node tests for the runner (request shaping + result
-normalization with a mocked `fetch`) and the driver generator (no network); keep
-type-check → tests → build → link-check; **CI never calls the execution API**. Deploy
-flow unchanged. Update `README.md` (new architecture; how to add a track/guide; how the
-runner works + how to swap the backend), `PROGRESS.md` (log + final summary + what to
-check first / preview / merge), `NEEDS_REVIEW.md` (aiGenerated guides, auto drivers, the
-provider change).
-
-## Phases (commit per phase, build green each)
-- **8** — Plan + provider spike (this doc).
-- **9** — Runner core (`runner.ts` + adapters + hermetic test).
-- **10** — `<CodeRunner>` + CodeMirror 6.
-- **11** — Driver generator + problem-page playgrounds.
-- **12** — Learning platform core (collections, routes, nav, reuse wiring).
-- **13** — Temporal / Mender / GCP starter content.
-- **14** — Reuse polish (cram, dashboard, homepage, search across both).
-- **15** — CI/CD + docs.
-- **16** — Self-review loop (incl. a few real in-browser runs) → push branch.
-
-## Self-review & definition of done
-Build green; existing LeetCode site fully intact; `<CodeRunner>` runs C++/Python/JS
-in-page via the abstracted client; problems have an editable, resettable runnable
-playground; three tracks scaffolded (nav + outlines + tagged starter content);
-search/tags/cram/progress/viz work across both content types; CI hermetic + green; docs
-updated; branch pushed; `main` untouched.
+Existing `learning` URLs (`/learning/temporal/durable-execution`, etc.) are preserved
+because `section = learning`. Coding and Reference keep their dedicated specialized routes.
 
 ---
+
+## 2. Relocating the four folders (`git mv`, history preserved)
+
+```
+NeetCode 150/*.cpp          → coding/neetcode-150/*.cpp
+Misc/*.cpp                  → coding/misc/*.cpp
+Interview Cheat Sheet/<g>/* → reference/cheatsheets/<g>/*
+CommonUsage/*.md            → reference/cpp/*.md
+```
+
+Top-level layout after the move:
+
+```
+content/            # notes collection (md/mdx) — drop-in sections
+  system-design/    behavioral/    learning/<track>/
+coding/             # raw .cpp problem store (import.meta.glob) — drop-in problems
+  neetcode-150/*.cpp    misc/*.cpp
+reference/          # relocated cheat sheets + C++ reference (import.meta.glob)
+  cheatsheets/<group>/*.{md,cpp}    cpp/*.md
+```
+
+Each is drop-in: add a `.cpp` to `coding/` → a problem page; add an `.md` to `reference/`
+→ a reference/cheat-sheet page. `src/lib/content.ts` glob paths update to the new homes;
+nothing else about the parsing changes. Verified by the link-checker (every relocated note
+must still render and be reachable).
+
 ---
 
-# Appendix A — Original site-rebuild plan (Phases 0–7)
+## 3. Per-problem layout: Standard Solution + My Solution
 
-Branch: `redesign`. Target deploy: GitHub Pages at `https://alanhsiu.github.io/Leetcode/`.
+Every coding problem page shows two clearly separated parts:
 
-## A.1 Content sources (READ-ONLY)
+- **(a) Standard Solution** — a clean canonical reference: original 1–2 sentence summary,
+  approach, C++ code, time/space complexity. Present on **every** problem.
+- **(b) My Solution** — my original note/code, surfaced where I have one (the 152 from the
+  `.cpp` store). For the ~36 problems I never solved, only the Standard Solution shows.
 
-Four folders are content sources and are never written to:
+Data model:
 
-| Folder | Files | Shape |
-| --- | --- | --- |
-| `NeetCode 150/` | 114 × `.cpp` | `<num>. <Title>.cpp`, a C++ `Solution` class + inline comments + `// Time/Space Complexity` footer |
-| `Misc/` | 38 × `.cpp` | Same shape; extra problems beyond NC150 |
-| `Interview Cheat Sheet/` | 17 × `.md` (+1 `.cpp`) | Topic cheat sheets in `CS/`, `EDA/`, `GPU/`, `HW/` |
-| `CommonUsage/` | 11 × `.md` | C++ STL quick-reference docs |
+- Extend `Problem` with `standard?: { summary, approach, code, time, space, source }` and
+  keep my parsed `.cpp` as `mySolution` (`code`, parsed complexity).
+- A new sharded store `src/data/standardSolutions/*.ts` (like `aiSolutionsA-D`) keyed by
+  LeetCode slug holds the Standard for each problem. For the ~36 AI-only problems the
+  existing `AI_SOLUTIONS` entry *is* the Standard (reused, not duplicated).
+- `source: "mine-cleaned" | "ai"` records provenance for **every** Standard in
+  `NEEDS_REVIEW.md` by problem id, so the owner can verify in batches.
+- Copyright: Standard summaries are original paraphrases; the official LeetCode link stays.
 
-Total: **152 problem solutions** + 18 cheat sheets + 11 reference docs.
+The collapsible **"▶ Run it"** playground keeps working — it runs against the Standard (or
+My, where present) solution via the existing `buildDriver` + `<CodeRunner>`.
 
-## A.2 Content model
+> **Volume note:** ~188 problems each need a Standard. The AI-only 36 are already covered.
+> The remaining ~152 are authored from a cleaned version of my own solution where possible,
+> else an original reference. This is generated in batches across Phase 2; each batch keeps
+> the build green and is logged in `NEEDS_REVIEW.md`.
 
-At build time we **read** the four folders (never mutate them) and derive collections:
+---
 
-- **problem** — one per `.cpp` in `NeetCode 150/` + `Misc/`. Parsed: `number`, `title`,
-  `source`, `code`, `language` `cpp`, time/space complexity (from the footer), plus
-  curated `difficulty`/`patterns[]`/`leetcodeSlug` with algorithmic slug fallback.
-- **cheatsheet** — one per `.md` under `Interview Cheat Sheet/`, grouped by top folder.
-- **reference** — one per `.md` in `CommonUsage/`.
+## 4. Navigation redesign (fix the overflow bug)
 
-Loaders use Vite `import.meta.glob(?raw, eager)` over the repo-root folders, so adding a
-new file later auto-appears with zero wiring.
+Current bug: ~11 flat top-level links + buttons on one row → horizontal scroll, "Learning"
+cut off. Redesign:
 
-Copyright: render only the user's own notes/code + facts (number, title, difficulty,
-pattern, official URL) + original short summaries. No LeetCode statements reproduced;
-AI-authored summaries/solutions tagged `aiGenerated: true` and logged in `NEEDS_REVIEW.md`.
+- **Desktop (≥ md):** ~5 section entries, two of them accessible **dropdown menus**:
+  - **Coding ▾** → Problems · NeetCode 150 · Patterns · Visualizations · Playground · Cram
+  - **System Design** · **Behavioral** · **Learning** (direct links)
+  - **Reference ▾** → Cheat Sheets · C++ Reference
+  - Right cluster: Search · Theme · Dashboard (icon). Dashboard moves out of the main row.
+  - Dropdowns: open on hover **and** focus/click, `aria-expanded`, Esc to close, full
+    keyboard nav. Nothing wraps or scrolls horizontally.
+- **Mobile (< md):** hamburger → vertical accordion of the same sections (groups expandable).
+- Verified at **360 / 768 / 1280 / 1920 px**: no horizontal overflow, "Learning" visible.
 
-## A.3 SSG choice — Astro + TypeScript (static)
+The section list is derived from the same `sections.ts` registry, so a new section folder
+shows up in nav automatically.
 
-Zero-JS-by-default static HTML, island hydration for interactive viz/search, first-class
-TS, Shiki highlighting, trivial `site`/`base` for project Pages, Vite globs to ingest
-external files untouched. `site: 'https://alanhsiu.github.io'`, `base: '/Leetcode'`; all
-internal links via a `href()` helper. Tailwind v4; dark default + light toggle. Search =
-build-time `/search-index.json` + Fuse.js island. Visualizations = framework-free
-vanilla-TS custom elements with a shared base controller, reduced-motion aware.
+---
 
-## A.4 Site map (original)
+## 5. Rebrand checklist (PrepKit, base `/prepkit`)
 
-`/` · `/problems` (+ `/problems/<n>-<slug>`) · `/patterns` (+ `/patterns/<slug>`) ·
-`/neetcode150` · `/visualizations` · `/cheatsheets` (+ pages) · `/reference` (+ pages) ·
-`/dashboard` · `/cram`.
+- `astro.config.mjs`: `base: '/prepkit'`, `site: 'https://alanhsiu.github.io'`.
+- `package.json` `name` → `prepkit`.
+- `src/lib/seo.ts`: `SITE_NAME` → **PrepKit**; broaden `SITE_DESCRIPTION` to interview-prep
+  platform; author/publisher unchanged.
+- `src/components/Header.astro`: logo text → PrepKit.
+- `src/components/Footer.astro`, `src/layouts/BaseLayout.astro`: brand/title/meta.
+- `public/site.webmanifest`, `public/robots.txt`: name + sitemap host path.
+- `src/pages/rss.xml.ts`: feed title/description.
+- `scripts/linkcheck.mjs`, `src/lib/url.ts` comment: `/Leetcode` → `/prepkit`.
+- `README.md`: rebrand + new architecture.
+- OG images regenerate with the new brand at build time.
+- All internal links already route through `href()`/`BASE_URL`; sitemap/RSS/canonical
+  follow `site`+`base` automatically.
+- Home hero: broaden from "Data Structures & Algorithms" to the full platform; the Coding
+  section keeps its own coding-specific intro.
 
-## A.5–A.7
+---
 
-Visualization library (18 animations), CI/CD (PR check + Pages deploy), and
-progress/review/docs as logged in `PROGRESS.md` Phases 3–7.
+## 6. Execution phases (commit per phase, build green each)
+
+0. **Explore & plan** — this file. ✅
+1. **Generalize + relocate** — generic `notes` collection + `sections.ts` + generic section
+   routes; `git mv` the four folders; update globs; seed System Design + Behavioral; document
+   drop-in. Build green.
+2. **Standard + My Solution** — two-part problem layout + `standardSolutions` store; cover
+   all problems; runner intact; provenance in NEEDS_REVIEW. Build green.
+3. **Nav + hero** — responsive grouped nav (no overflow at any width); generalized hero.
+4. **Rebrand** — PrepKit + base `/prepkit` everywhere; regenerate OG/icons.
+5. **CI/CD & docs** — hermetic CI; README/PLAN/PROGRESS/NEEDS_REVIEW; self-review loop until
+   clean; push branch (main untouched).
+
+## Self-review gate (Phase 5)
+
+`astro check` 0 errors · viz/runner/driver tests pass · `npm run build` green ·
+`npm run linkcheck` 0 broken · every relocated note renders & is reachable · every problem
+shows Standard (+ My where it exists) · nav has zero horizontal overflow at 360/768/1280/1920 ·
+search/tags/cram/progress/viz/runner work across all sections · OG/sitemap/RSS/manifest/icons
+regenerate under the new base.

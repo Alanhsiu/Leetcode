@@ -22,8 +22,10 @@ import {
   sectionMeta, groupMeta, notesSections, humanize,
   type SectionMeta, type GroupMeta,
 } from "../data/sections";
+import { fileDates } from "../lib/dates";
 
 export type NoteEntry = CollectionEntry<"notes">;
+export type NoteType = "concept" | "leetcode" | "other";
 
 /** Classification of one entry within the section/group/note model. */
 export interface NoteInfo {
@@ -34,6 +36,11 @@ export interface NoteInfo {
   kind: "section" | "group" | "note";
   /** URL path within the section: "" (section landing), "<group>", "<note>", "<group>/<note>". */
   path: string;
+  /** Resolved timestamps: explicit frontmatter wins, else derived from git history. */
+  createdAt: Date;
+  updatedAt: Date;
+  /** Note kind (concept | leetcode | other) — drives badges + timeline filters. */
+  type: NoteType;
 }
 
 function parts(id: string): string[] {
@@ -63,12 +70,16 @@ function classify(e: NoteEntry, groups: Map<string, Set<string>>): NoteInfo {
   const p = parts(e.id);
   const section = p[0];
   const gset = groups.get(section);
-  if (p.length === 1) return { entry: e, section, kind: "section", path: "" };
+  // createdAt/updatedAt/type are placeholders here; getNoteInfos() fills them in
+  // (resolving explicit frontmatter vs. git-derived dates).
+  const placeholder = new Date(0);
+  const base = { entry: e, createdAt: placeholder, updatedAt: placeholder, type: e.data.type };
+  if (p.length === 1) return { ...base, section, kind: "section", path: "" };
   if (p.length === 2) {
-    if (gset?.has(p[1])) return { entry: e, section, group: p[1], kind: "group", path: p[1] };
-    return { entry: e, section, kind: "note", path: p[1] };
+    if (gset?.has(p[1])) return { ...base, section, group: p[1], kind: "group", path: p[1] };
+    return { ...base, section, kind: "note", path: p[1] };
   }
-  return { entry: e, section, group: p[1], kind: "note", path: p.slice(1).join("/") };
+  return { ...base, section, group: p[1], kind: "note", path: p.slice(1).join("/") };
 }
 
 export async function getNotes(): Promise<NoteEntry[]> {
@@ -80,7 +91,15 @@ export async function getNoteInfos(): Promise<NoteInfo[]> {
   if (_infos) return _infos;
   const all = await getNotes();
   const groups = groupsBySection(all);
-  _infos = all.map((e) => classify(e, groups));
+  _infos = all.map((e) => {
+    const info = classify(e, groups);
+    // Explicit frontmatter timestamps win; otherwise derive from git history.
+    const git = fileDates((e as { filePath?: string }).filePath ?? `content/${e.id}.md`);
+    info.createdAt = e.data.createdAt ?? git.createdAt;
+    info.updatedAt = e.data.updatedAt ?? e.data.createdAt ?? git.updatedAt;
+    info.type = e.data.type;
+    return info;
+  });
   return _infos;
 }
 
@@ -116,12 +135,24 @@ function groupMetaFor(slug: string, fallbackOrder: number): GroupMeta {
   return groupMeta(slug) ?? { slug, title: humanize(slug), blurb: "", icon: "📁", order: 100 + fallbackOrder };
 }
 
-const byOrder = (a: NoteInfo, b: NoteInfo) =>
-  a.entry.data.order - b.entry.data.order || a.entry.data.title.localeCompare(b.entry.data.title);
+// Section/group listing sort. Curated `order` is primary so hand-ordered tracks
+// (Temporal/Mender/GCP) keep their pedagogical sequence even when their files were
+// committed at different times. Captured notes leave `order` at its default (999),
+// so they all tie on `order` and fall through to createdAt DESC — i.e. the capture
+// stream (e.g. the /notes section) is naturally newest-first. The /timeline page
+// uses pure chronological order instead (see byChrono).
+const byListing = (a: NoteInfo, b: NoteInfo) =>
+  a.entry.data.order - b.entry.data.order ||
+  +b.createdAt - +a.createdAt ||
+  a.entry.data.title.localeCompare(b.entry.data.title);
+
+// Pure chronological, newest first — for the timeline.
+const byChrono = (a: NoteInfo, b: NoteInfo) =>
+  +b.createdAt - +a.createdAt || a.entry.data.title.localeCompare(b.entry.data.title);
 
 function buildSectionView(slug: string, infos: NoteInfo[], fallbackOrder: number): SectionView {
   const landing = infos.find((n) => n.kind === "section");
-  const notes = infos.filter((n) => n.kind === "note" && !n.group).sort(byOrder);
+  const notes = infos.filter((n) => n.kind === "note" && !n.group).sort(byListing);
 
   const groupMap = new Map<string, NoteInfo[]>();
   for (const n of infos) {
@@ -135,7 +166,7 @@ function buildSectionView(slug: string, infos: NoteInfo[], fallbackOrder: number
     .map(([g, ns]) => ({
       meta: groupMetaFor(g, gi++),
       landing: ns.find((n) => n.kind === "group"),
-      notes: ns.filter((n) => n.kind === "note").sort(byOrder),
+      notes: ns.filter((n) => n.kind === "note").sort(byListing),
     }))
     .sort((a, b) => a.meta.order - b.meta.order);
 
@@ -169,6 +200,15 @@ export async function getSectionView(slug: string): Promise<SectionView | undefi
 /** Flat, ordered list of a section's notes (groups expanded in group order) — for prev/next. */
 export function orderedNotes(view: SectionView): NoteInfo[] {
   return [...view.notes, ...view.groups.flatMap((g) => g.notes)];
+}
+
+/**
+ * Every real note (not section/group landings), newest first — powers /timeline.
+ * Carries the resolved URL path so the page doesn't re-derive it.
+ */
+export async function getTimelineNotes(): Promise<NoteInfo[]> {
+  const infos = await getNoteInfos();
+  return infos.filter((n) => n.kind === "note").sort(byChrono);
 }
 
 export { notesSections };

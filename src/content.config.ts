@@ -22,6 +22,19 @@ const notes = defineCollection({
     order: z.number().default(999),
     tags: z.array(z.string()).default([]),
     aiGenerated: z.boolean().default(false),
+
+    // ---- Note-capture metadata (task: low-friction capture + timeline) ----
+    // What kind of note this is — drives badges on the section index + /timeline.
+    type: z.enum(["concept", "leetcode", "other"]).default("concept"),
+    // Full ISO timestamps. BOTH are optional: when omitted (a note added by hand
+    // or via the GitHub web editor on mobile), they are DERIVED at build from the
+    // file's git history — see src/lib/dates.ts. So nothing is ever unsorted.
+    createdAt: z.coerce.date().optional(),
+    updatedAt: z.coerce.date().optional(),
+    // LeetCode-specific (only meaningful when type === "leetcode").
+    difficulty: z.enum(["Easy", "Medium", "Hard"]).optional(),
+    leetcodeUrl: z.string().url().optional(),
+    problemNumber: z.number().optional(),
   }),
 });
 

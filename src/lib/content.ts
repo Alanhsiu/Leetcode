@@ -1,7 +1,9 @@
-// Build-time content pipeline. Reads the four READ-ONLY source folders via
-// Vite globs (raw file contents) and derives the site's collections. Source
-// files are never mutated. Dropping a new file into any folder makes it appear
-// automatically with zero wiring.
+// Build-time content pipeline. Reads the relocated source folders via Vite globs
+// (raw file contents) and derives the site's specialized collections (coding
+// problems + reference/cheat sheets). Dropping a new file into any folder makes
+// it appear automatically with zero wiring. The markdown "notes" sections
+// (System Design, Behavioral, Learning) use the separate Content-Layer
+// collection in src/content.config.ts + src/lib/notes.ts.
 import { NEETCODE_150, NEETCODE_CATEGORIES, type Difficulty } from "../data/neetcode150";
 import { EXTRA_PROBLEMS } from "../data/extraProblems";
 import { AI_SOLUTIONS } from "../data/aiSolutions";
@@ -9,32 +11,32 @@ import { slugify } from "./url";
 import { markdownToText } from "./markdown";
 
 // ---------- raw source imports ----------
-const neetcodeRaw = import.meta.glob("/NeetCode 150/*.cpp", {
+const neetcodeRaw = import.meta.glob("/coding/neetcode-150/*.cpp", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
 
-const miscRaw = import.meta.glob("/Misc/*.cpp", {
+const miscRaw = import.meta.glob("/coding/misc/*.cpp", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
 
-const cheatsheetRaw = import.meta.glob("/Interview Cheat Sheet/**/*.md", {
+const cheatsheetRaw = import.meta.glob("/reference/cheatsheets/**/*.md", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
 
 // Code-only cheat sheets (e.g. CS/OOD.cpp) are rendered as syntax-highlighted code.
-const cheatsheetCodeRaw = import.meta.glob("/Interview Cheat Sheet/**/*.{cpp,cc,h,hpp}", {
+const cheatsheetCodeRaw = import.meta.glob("/reference/cheatsheets/**/*.{cpp,cc,h,hpp}", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
 
-const referenceRaw = import.meta.glob("/CommonUsage/*.md", {
+const referenceRaw = import.meta.glob("/reference/cpp/*.md", {
   query: "?raw",
   import: "default",
   eager: true,

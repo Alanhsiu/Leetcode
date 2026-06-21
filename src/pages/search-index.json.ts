@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { getProblems, getCheatsheets, getReference } from "../lib/content";
-import { getLearning, trackSlug, guideSlug, isLanding } from "../lib/learning";
-import { trackMeta, humanizeTrack } from "../data/tracks";
+import { getNoteInfos } from "../lib/notes";
+import { sectionMeta, groupMeta, humanize } from "../data/sections";
 import { markdownToText } from "../lib/markdown";
 import { href } from "../lib/url";
 
@@ -52,15 +52,17 @@ export const GET: APIRoute = async () => {
     });
   }
 
-  for (const g of await getLearning()) {
-    if (isLanding(g)) continue;
-    const tslug = trackSlug(g);
-    const tTitle = trackMeta(tslug)?.title ?? humanizeTrack(tslug);
+  for (const n of await getNoteInfos()) {
+    if (n.kind !== "note") continue; // skip section + group landings
+    const sTitle = sectionMeta(n.section)?.title ?? humanize(n.section);
+    const gTitle = n.group ? (groupMeta(n.group)?.title ?? humanize(n.group)) : null;
+    const label = gTitle ? `${sTitle} · ${gTitle}` : sTitle;
+    const g = n.entry;
     docs.push({
-      kind: "guide",
-      title: `${g.data.title} (${tTitle})`,
-      url: href(`/learning/${tslug}/${guideSlug(g)}`),
-      patterns: [tTitle, ...g.data.tags],
+      kind: "note",
+      title: `${g.data.title} (${label})`,
+      url: href(`/${n.section}/${n.path}`),
+      patterns: [sTitle, ...(gTitle ? [gTitle] : []), ...g.data.tags],
       text: clip(`${g.data.description} ${markdownToText(g.body ?? "")}`),
     });
   }

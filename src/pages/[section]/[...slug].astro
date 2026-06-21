@@ -1,0 +1,135 @@
+---
+import { render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LevelBadge from "../../components/LevelBadge.astro";
+import ProgressControls from "../../components/ProgressControls.astro";
+import { href } from "../../lib/url";
+import { getNoteInfos, getSectionView, progressId } from "../../lib/notes";
+import { sectionMeta, groupMeta, humanize } from "../../data/sections";
+import { articleLd, breadcrumbLd } from "../../lib/seo";
+
+export async function getStaticPaths() {
+  const infos = await getNoteInfos();
+  // Section landings are handled by [section]/index.astro; group landings + notes route here.
+  return infos
+    .filter((n) => n.kind !== "section")
+    .map((n) => ({ params: { section: n.section, slug: n.path }, props: { id: n.entry.id } }));
+}
+
+const { id } = Astro.props;
+const infos = await getNoteInfos();
+const info = infos.find((n) => n.entry.id === id)!;
+const { entry, section: sslug, group: gslug, kind } = info;
+const isGroup = kind === "group";
+
+const smeta = sectionMeta(sslug) ?? { slug: sslug, title: humanize(sslug), icon: "📘", blurb: "", order: 99, kind: "notes" as const };
+const gmeta = gslug ? (groupMeta(gslug) ?? { slug: gslug, title: humanize(gslug), icon: "📁", blurb: "", order: 99 }) : null;
+const view = await getSectionView(sslug);
+
+// The notes this entry sits among (a group's notes, or the section's ungrouped notes).
+const siblings = gslug ? (view?.groups.find((g) => g.meta.slug === gslug)?.notes ?? []) : (view?.notes ?? []);
+
+const { Content } = await render(entry);
+const pageTitle = isGroup ? gmeta!.title : entry.data.title;
+const pageUrl = href(`/${sslug}/${info.path}`);
+const pageDesc = (isGroup ? gmeta!.blurb : entry.data.description) || `${smeta.title} — ${pageTitle}`;
+
+const crumbs = [{ name: smeta.title, url: href(`/${sslug}`) }];
+if (gmeta && !isGroup) crumbs.push({ name: gmeta.title, url: href(`/${sslug}/${gmeta.slug}`) });
+crumbs.push({ name: pageTitle, url: pageUrl });
+const jsonLd = isGroup
+  ? [breadcrumbLd(crumbs)]
+  : [articleLd({ headline: entry.data.title, description: pageDesc, url: pageUrl, type: "TechArticle" }), breadcrumbLd(crumbs)];
+
+// prev/next within siblings (notes only)
+const idx = isGroup ? -1 : siblings.findIndex((n) => n.entry.id === entry.id);
+const prev = idx > 0 ? siblings[idx - 1] : null;
+const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
+---
+<BaseLayout title={pageTitle} description={pageDesc} type={isGroup ? "website" : "article"} jsonLd={jsonLd} wide={isGroup}>
+  <nav class="text-sm muted mb-4">
+    <a href={href(`/${sslug}`)} class="hover:text-[var(--accent)]">{smeta.title}</a>
+    {gmeta && !isGroup && (
+      <>
+        <span class="mx-1">/</span>
+        <a href={href(`/${sslug}/${gmeta.slug}`)} class="hover:text-[var(--accent)]">{gmeta.title}</a>
+      </>
+    )}
+    <span class="mx-1">/</span>
+    <span>{pageTitle}</span>
+  </nav>
+
+  {isGroup ? (
+    <>
+      <header class="mb-6">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-3xl" aria-hidden="true">{gmeta!.icon}</span>
+          <h1 class="text-3xl font-bold">{gmeta!.title}</h1>
+        </div>
+        {gmeta!.blurb && <p class="mt-2 muted max-w-2xl">{gmeta!.blurb}</p>}
+      </header>
+
+      <section class="prose mb-8 max-w-3xl">
+        <Content />
+      </section>
+
+      <section>
+        <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide muted">Outline · {siblings.length} {siblings.length === 1 ? "note" : "notes"}</h2>
+        {siblings.length === 0 ? (
+          <p class="muted text-sm">No notes yet.</p>
+        ) : (
+          <ol class="grid gap-2">
+            {siblings.map((n, i) => (
+              <li>
+                <a href={href(`/${sslug}/${n.path}`)} class="card p-3 flex items-center gap-3 text-sm">
+                  <span class="muted font-mono text-xs w-6 text-right">{i + 1}</span>
+                  <span class="progress-dot muted shrink-0" data-progress-indicator={progressId(n)}>○</span>
+                  <span class="flex-1">
+                    <span class="font-medium">{n.entry.data.title}</span>
+                    {n.entry.data.description && <span class="muted block text-xs mt-0.5">{n.entry.data.description}</span>}
+                  </span>
+                  <LevelBadge level={n.entry.data.level} />
+                </a>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+    </>
+  ) : (
+    <>
+      <header class="mb-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-2xl sm:text-3xl font-bold">{entry.data.title}</h1>
+          <LevelBadge level={entry.data.level} />
+        </div>
+        {entry.data.description && <p class="muted mt-2">{entry.data.description}</p>}
+        {entry.data.tags.length > 0 && (
+          <div class="flex flex-wrap gap-1.5 mt-3 text-xs">
+            {entry.data.tags.map((t) => <span class="badge badge-tag">{t}</span>)}
+          </div>
+        )}
+      </header>
+
+      <article class="prose">
+        <Content />
+      </article>
+
+      <section class="surface rounded-xl p-4 mt-8 flex items-center justify-between gap-3 flex-wrap">
+        <span class="text-sm muted">Mark your progress with this note:</span>
+        <ProgressControls slug={progressId(info)} size="sm" />
+      </section>
+
+      <nav class="flex justify-between gap-3 mt-8 pt-6 border-t border-token text-sm">
+        {prev ? (
+          <a href={href(`/${sslug}/${prev.path}`)} class="viz-btn flex-1 !justify-start">← {prev.entry.data.title}</a>
+        ) : (
+          <a href={href(gmeta ? `/${sslug}/${gmeta.slug}` : `/${sslug}`)} class="viz-btn flex-1 !justify-start">← {gmeta ? gmeta.title : smeta.title}</a>
+        )}
+        {next ? (
+          <a href={href(`/${sslug}/${next.path}`)} class="viz-btn flex-1 !justify-end text-right">{next.entry.data.title} →</a>
+        ) : <span></span>}
+      </nav>
+    </>
+  )}
+</BaseLayout>

@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { href } from "../lib/url";
 import { getProblems } from "../lib/content";
-import { getTrackViews, guideProgressId, guideSlug } from "../lib/learning";
+import { getSectionViews, progressId } from "../lib/notes";
 
 const problems = getProblems().map((p) => ({
   slug: p.routeSlug,
@@ -13,15 +13,24 @@ const problems = getProblems().map((p) => ({
   url: href(`/problems/${p.routeSlug}`),
 }));
 
-const trackViews = await getTrackViews();
-const guides = trackViews.flatMap((t) =>
-  t.guides.map((g) => ({
-    slug: guideProgressId(g),
-    title: g.data.title,
-    track: t.meta.title,
-    url: href(`/learning/${t.meta.slug}/${guideSlug(g)}`),
+// Every note across the notes-driven sections, labelled by section (+ group).
+const sectionViews = (await getSectionViews()).filter((v) => v.meta.kind === "notes");
+const guides = sectionViews.flatMap((v) => [
+  ...v.notes.map((g) => ({
+    slug: progressId(g),
+    title: g.entry.data.title,
+    track: v.meta.title,
+    url: href(`/${v.meta.slug}/${g.path}`),
   })),
-);
+  ...v.groups.flatMap((grp) =>
+    grp.notes.map((g) => ({
+      slug: progressId(g),
+      title: g.entry.data.title,
+      track: `${v.meta.title} · ${grp.meta.title}`,
+      url: href(`/${v.meta.slug}/${g.path}`),
+    })),
+  ),
+]);
 ---
 <BaseLayout title="Dashboard" description="Your study progress across problems and learning guides, stored locally in your browser." wide noindex>
   <header class="mb-6">
@@ -70,8 +79,8 @@ const guides = trackViews.flatMap((t) =>
   {guides.length > 0 && (
     <section class="mt-8">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="font-semibold">Learning</h2>
-        <span class="text-sm muted"><span id="learn-pct">0</span>% touched of {guides.length} guides</span>
+        <h2 class="font-semibold">Notes</h2>
+        <span class="text-sm muted"><span id="learn-pct">0</span>% touched of {guides.length} notes</span>
       </div>
       <div id="by-track" class="grid gap-2 text-sm sm:grid-cols-2"></div>
     </section>

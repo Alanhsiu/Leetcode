@@ -1,0 +1,91 @@
+---
+import { render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import LevelBadge from "../../components/LevelBadge.astro";
+import { href } from "../../lib/url";
+import { getSectionViews, getSectionView, progressId } from "../../lib/notes";
+import { notesSections } from "../../data/sections";
+import { breadcrumbLd } from "../../lib/seo";
+
+export async function getStaticPaths() {
+  // Only notes-driven sections get the generic hub; coding/reference are specialized.
+  const views = await getSectionViews();
+  const notesSlugs = new Set(notesSections().map((s) => s.slug));
+  return views
+    .filter((v) => notesSlugs.has(v.meta.slug) || v.meta.kind === "notes")
+    .map((v) => ({ params: { section: v.meta.slug } }));
+}
+
+const { section } = Astro.params;
+const view = await getSectionView(section!);
+if (!view) return Astro.redirect(href("/"));
+const { meta, landing, notes, groups } = view;
+const Landing = landing ? (await render(landing.entry)).Content : null;
+const totalNotes = notes.length + groups.reduce((n, g) => n + g.notes.length, 0);
+const jsonLd = [breadcrumbLd([{ name: meta.title, url: href(`/${meta.slug}`) }])];
+---
+<BaseLayout title={meta.title} description={meta.blurb} jsonLd={jsonLd} wide>
+  <header class="mb-8">
+    <p class="text-sm font-semibold uppercase tracking-widest" style="color: var(--accent);">{meta.title}</p>
+    <div class="mt-2 flex items-center gap-3 flex-wrap">
+      <span class="text-3xl" aria-hidden="true">{meta.icon}</span>
+      <h1 class="text-3xl sm:text-4xl font-bold">{meta.title}</h1>
+    </div>
+    {meta.blurb && <p class="mt-3 muted max-w-2xl">{meta.blurb}</p>}
+    <p class="mt-3 text-xs muted">
+      {groups.length > 0 && `${groups.length} ${groups.length === 1 ? "group" : "groups"} · `}
+      {totalNotes} {totalNotes === 1 ? "note" : "notes"}
+    </p>
+  </header>
+
+  {Landing && (
+    <section class="prose mb-8 max-w-3xl">
+      <Landing />
+    </section>
+  )}
+
+  {groups.length > 0 && (
+    <section class="mb-10">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {groups.map((g) => (
+          <a href={href(`/${meta.slug}/${g.meta.slug}`)} class="card p-5 block">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl" aria-hidden="true">{g.meta.icon}</span>
+              <h2 class="font-semibold text-lg">{g.meta.title}</h2>
+              <span class="badge badge-tag ml-auto">{g.notes.length} {g.notes.length === 1 ? "note" : "notes"}</span>
+            </div>
+            {g.meta.blurb && <p class="mt-2 text-sm muted">{g.meta.blurb}</p>}
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {notes.length > 0 && (
+    <section>
+      <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide muted">Notes · {notes.length}</h2>
+      <ol class="grid gap-2">
+        {notes.map((n, i) => (
+          <li>
+            <a href={href(`/${meta.slug}/${n.path}`)} class="card p-3 flex items-center gap-3 text-sm">
+              <span class="muted font-mono text-xs w-6 text-right">{i + 1}</span>
+              <span class="progress-dot muted shrink-0" data-progress-indicator={progressId(n)}>○</span>
+              <span class="flex-1">
+                <span class="font-medium">{n.entry.data.title}</span>
+                {n.entry.data.description && <span class="muted block text-xs mt-0.5">{n.entry.data.description}</span>}
+              </span>
+              <LevelBadge level={n.entry.data.level} />
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  {totalNotes === 0 && <p class="muted text-sm">No notes yet — drop a markdown file into <code>content/{meta.slug}/</code>.</p>}
+
+  <p class="muted text-xs mt-10">
+    Add a note: drop a <code>.md</code>/<code>.mdx</code> file into <code>content/{meta.slug}/</code>
+    (or a sub-folder to start a group). It appears here automatically.
+  </p>
+</BaseLayout>

@@ -2,11 +2,14 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
+import { remarkBaseLinks } from './src/lib/remark-base-links.mjs';
+
+const BASE = '/Leetcode';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://alanhsiu.github.io',
-  base: '/Leetcode',
+  base: BASE,
   output: 'static',
   trailingSlash: 'ignore',
   integrations: [
@@ -18,6 +21,9 @@ export default defineConfig({
     }),
   ],
   markdown: {
+    // Base-prefix root-absolute links in notes (e.g. [x](/behavioral/star-method))
+    // so cross-note links are clean and work under the site base.
+    remarkPlugins: [[remarkBaseLinks, { base: BASE }]],
     // Dual-theme Shiki for guide (md/mdx) code blocks, matching the rest of the
     // site (light default + .dark swap, see global.css `.astro-code`).
     shikiConfig: {

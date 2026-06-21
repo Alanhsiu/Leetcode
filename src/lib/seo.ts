@@ -8,8 +8,8 @@
 import { getProblems, getCheatsheets, getReference } from "./content";
 import { PATTERNS } from "./patterns";
 import { VISUALIZATIONS } from "./patterns";
-import { getLearning, getTrackViews, trackSlug, guideSlug, isLanding } from "./learning";
-import { trackMeta, humanizeTrack } from "../data/tracks";
+import { getNoteInfos, getSectionViews } from "./notes";
+import { sectionMeta, groupMeta, humanize } from "../data/sections";
 import { href } from "./url";
 
 export const SITE_NAME = "DSA Interview Notes";
@@ -130,8 +130,7 @@ export async function getAllPages(): Promise<PageInfo[]> {
     { key: "cheatsheets", url: href("/cheatsheets"), kind: "section", title: "Cheat Sheets", description: "Topic cheat sheets across CS, EDA, GPU, and hardware.", eyebrow: "Coding Interview" },
     { key: "reference", url: href("/reference"), kind: "section", title: "C++ Reference", description: "Quick C++ STL reference notes — containers, iterators, and common usage.", eyebrow: "Coding Interview" },
     { key: "cram", url: href("/cram"), kind: "section", title: "Cram Mode", description: "Rapid revision: every solution collapsed to its pattern and complexity, expandable to full code.", eyebrow: "Coding Interview" },
-    { key: "dashboard", url: href("/dashboard"), kind: "section", title: "Dashboard", description: "Your study progress across problems and learning guides, stored locally in your browser.", eyebrow: "Coding Interview" },
-    { key: "learning", url: href("/learning"), kind: "section", title: "Learning", description: "Hands-on learning tracks beyond coding interviews: Temporal, Mender OTA, and Google Cloud.", eyebrow: "Learning" },
+    { key: "dashboard", url: href("/dashboard"), kind: "section", title: "Dashboard", description: "Your study progress across problems and notes, stored locally in your browser.", eyebrow: "Coding Interview" },
     { key: "404", url: href("/404"), kind: "section", title: "Page not found", description: "That page doesn't exist — head back to the notes.", eyebrow: "404" },
   );
 
@@ -186,31 +185,42 @@ export async function getAllPages(): Promise<PageInfo[]> {
     });
   }
 
-  // ---- learning track landings ----
-  const views = await getTrackViews();
-  for (const v of views) {
+  // ---- notes-section hubs (+ group landings) ----
+  const views = await getSectionViews();
+  for (const v of views.filter((v) => v.meta.kind === "notes")) {
     pages.push({
-      key: `learning/${v.meta.slug}`,
-      url: href(`/learning/${v.meta.slug}`),
+      key: v.meta.slug,
+      url: href(`/${v.meta.slug}`),
       kind: "section",
       title: v.meta.title,
-      description: v.meta.blurb || `Guides for ${v.meta.title}.`,
-      eyebrow: "Learning track",
+      description: v.meta.blurb || `Notes for ${v.meta.title}.`,
+      eyebrow: "Section",
     });
+    for (const g of v.groups) {
+      pages.push({
+        key: `${v.meta.slug}/${g.meta.slug}`,
+        url: href(`/${v.meta.slug}/${g.meta.slug}`),
+        kind: "section",
+        title: g.meta.title,
+        description: g.meta.blurb || `${v.meta.title} — ${g.meta.title}.`,
+        eyebrow: `${v.meta.title} group`,
+      });
+    }
   }
 
-  // ---- learning guides ----
-  for (const g of await getLearning()) {
-    if (isLanding(g)) continue;
-    const tslug = trackSlug(g);
-    const tTitle = trackMeta(tslug)?.title ?? humanizeTrack(tslug);
+  // ---- notes ----
+  for (const n of await getNoteInfos()) {
+    if (n.kind !== "note") continue; // section + group landings handled above
+    const sTitle = sectionMeta(n.section)?.title ?? humanize(n.section);
+    const gTitle = n.group ? (groupMeta(n.group)?.title ?? humanize(n.group)) : null;
+    const g = n.entry;
     pages.push({
-      key: `learning/${tslug}/${guideSlug(g)}`,
-      url: href(`/learning/${tslug}/${guideSlug(g)}`),
+      key: `${n.section}/${n.path}`,
+      url: href(`/${n.section}/${n.path}`),
       kind: "guide",
       title: g.data.title,
-      description: g.data.description || `${tTitle} — ${g.data.title}.`,
-      eyebrow: `Guide · ${tTitle}`,
+      description: g.data.description || `${sTitle} — ${g.data.title}.`,
+      eyebrow: gTitle ? `${sTitle} · ${gTitle}` : sTitle,
     });
   }
 

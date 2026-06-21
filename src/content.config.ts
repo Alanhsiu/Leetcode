@@ -1,13 +1,20 @@
-// Astro 5 Content Layer: the "learning" collection ingests guide files from the
-// (new, non-protected) content/learning/<track>/ folders. Dropping a .md/.mdx
-// file into a track folder makes a guide appear with zero wiring; a new folder is
-// a new track. The four original content folders are untouched (they use the
-// separate import.meta.glob pipeline in src/lib/content.ts).
+// Astro 5 Content Layer: the generalized `notes` collection powers every markdown
+// section (System Design, Behavioral, Learning, …) from one drop-in structure:
+//
+//   content/<section>/<note>.md             → a note in a flat section
+//   content/<section>/<group>/<note>.md      → a note inside a group (e.g. a track)
+//   content/<section>/index.md               → the section landing intro
+//   content/<section>/<group>/index.md       → a group landing intro
+//
+// Dropping a .md/.mdx file makes a page appear; dropping a folder makes a new
+// section (or group) — all with zero wiring (see src/lib/notes.ts). The coding
+// problems + reference/cheat sheets use the separate raw-glob pipeline in
+// src/lib/content.ts (relocated under coding/ and reference/).
 import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 
-const learning = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./content/learning" }),
+const notes = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./content" }),
   schema: z.object({
     title: z.string(),
     description: z.string().default(""),
@@ -15,9 +22,7 @@ const learning = defineCollection({
     order: z.number().default(999),
     tags: z.array(z.string()).default([]),
     aiGenerated: z.boolean().default(false),
-    // Optional explicit track override; otherwise derived from the folder.
-    track: z.string().optional(),
   }),
 });
 
-export const collections = { learning };
+export const collections = { notes };

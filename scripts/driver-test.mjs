@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { buildDriver } from "../src/lib/driver.ts";
 
 const ROOT = process.cwd();
-const FOLDERS = ["NeetCode 150", "Misc"];
+const FOLDERS = ["coding/neetcode-150", "coding/misc"];
 
 const files = [];
 for (const f of FOLDERS) {

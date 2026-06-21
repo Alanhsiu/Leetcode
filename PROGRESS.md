@@ -203,3 +203,70 @@ stays green; `main` untouched; the four content folders stay read-only.
   change, unverified drivers, and every AI-drafted guide. This log + final summary below.
 - Full local suite green: check 0 errors, viz 18/18, runner 10/10, driver OK, build 263
   pages, 10041 links / 0 broken.
+
+## Phase 16 — Self-review loop ✅
+- **Real end-to-end runner test** (the brief's "a few real runs"): ran the actual
+  `runCode()` client against **live Wandbox** with Two Sum's auto-generated driver →
+  `[1, 0]` (exit 0) and a Python snippet → `retry demo -> 15` (exit 0). The full path
+  (buildDriver → runCode → text/plain POST → normalized result) works.
+- **Compile verification** (offline `clang++`): all 132 runnable drivers compile + run.
+- **Dev smoke test** (`astro dev`): `/`, `/playground`, `/learning`, each track + guide,
+  a problem page, `/cram`, `/dashboard` all return **200**; guide renders its
+  `<CodeRunner>`, problem page has playground **+** viz, cram shows the learning section.
+- **Accessibility/integrity:** exactly **one `<h1>`** on every sampled page (guides use
+  `##`→h2); problem pages keep viz + code + progress + related + LeetCode link; no `<img>`
+  without `alt`; reduced-motion CSS present; CodeMirror/runner add no autoplay motion.
+- **Guardrails:** the four content folders are **untouched** (`git diff main...HEAD` over
+  them is empty); `main` not touched.
+
+---
+
+## SUMMARY — Online IDE + Learning Platform (Part A/B/C)
+
+Built on top of the existing Astro site, on `feature/online-ide-and-learning`:
+
+- **Part A — in-page code runner.** One swappable client (`src/lib/runner.ts`,
+  `runCode({language,version,files,stdin})`) with Wandbox (default) + Piston adapters —
+  chosen after confirming the public Piston endpoint is now whitelist-only. A reusable
+  `<CodeRunner>` (CodeMirror 6, lazy + code-split) on `/playground`, in guides, and as a
+  collapsible **"▶ Run it"** on every problem page, where `src/lib/driver.ts` synthesizes
+  a `main()` + sample input (132/152 runnable, the rest graceful stubs; all unverified).
+- **Part B — multi-track learning platform.** A `learning` Content-Layer collection
+  (`content/learning/**`, MDX) → `/learning` hub, per-track landings + outlines, and
+  guide pages; **Temporal / Mender / GCP** scaffolded with 14 AI-drafted starter guides.
+  Search, level badges, cram, progress, and visualizations all work across problems
+  **and** guides. Adding a guide = drop a file; adding a track = drop a folder.
+- **Part C — CI/CD & docs.** CI gained two **hermetic** tests (runner + driver, network
+  mocked); the execution API is never called in CI/build. README, PLAN, this log, and
+  NEEDS_REVIEW updated.
+
+### What to check first
+1. `/playground` — run C++, Python, JS in the browser (try the sample inputs).
+2. `/problems/1-two-sum` → expand **"▶ Run it"** → Run (auto-driver prints `[1, 0]`).
+   Try a tree problem too, e.g. `/problems/104-maximum-depth-of-binary-tree`.
+3. `/learning` → **Temporal → "What is Durable Execution?"** (a guide that embeds a
+   runnable Python snippet) and `/learning/gcp/cloud-run` (read-only `gcloud` blocks).
+4. `NEEDS_REVIEW.md` §D–F — the provider change, the **unverified** auto-drivers, and
+   every **AI-drafted** guide to verify against official docs.
+5. `/cram` (now includes a "Learning guides" section) and `/dashboard` (per-track progress).
+
+### Preview locally
+```bash
+npm install
+npm run dev        # http://localhost:4321/Leetcode/   (uses the next free port if busy)
+# or the production build:
+npm run build && npm run preview
+# checks: npm run check && npm run runner-test && npm run driver-test && npm run viz-test
+#         npm run build && npm run linkcheck
+```
+Note: the code runner calls the public Wandbox sandbox **from your browser** at runtime;
+the build, tests, and CI never call it.
+
+### Go live (your move — `main` untouched)
+```bash
+git checkout main && git merge feature/online-ide-and-learning && git push origin main
+```
+The existing `deploy.yml` then builds + publishes to GitHub Pages. (One-time, if not
+already set: repo **Settings → Pages → Source = "GitHub Actions"**.) To run code through
+your own backend instead of the public sandbox, edit the `RUNNER` map in
+`src/lib/runner.ts` (see README → "Swapping the execution backend").

@@ -9,6 +9,7 @@ import { href, slugify } from "../../lib/url";
 import { CATEGORY_VIZ } from "../../lib/patterns";
 import { renderMarkdown } from "../../lib/markdown";
 import { buildDriver } from "../../lib/driver";
+import { articleLd, breadcrumbLd } from "../../lib/seo";
 
 export function getStaticPaths() {
   const problems = getProblems();
@@ -30,8 +31,17 @@ const vizIds = p.patterns.flatMap((pat) => CATEGORY_VIZ[pat] ?? []);
 const sourceLabel = p.aiGenerated ? "Additional coverage" : p.source === "neetcode" ? "NeetCode 150" : "Misc";
 const approachHtml = p.approach ? await renderMarkdown(p.approach) : "";
 const driver = buildDriver(p.code);
+const pageUrl = href(`/problems/${p.routeSlug}`);
+const pageDesc = `C++ solution and notes for LeetCode ${p.number}. ${p.title} — pattern: ${p.patterns.join(", ")}.`;
+const jsonLd = [
+  articleLd({ headline: `${p.number}. ${p.title}`, description: pageDesc, url: pageUrl, type: "TechArticle" }),
+  breadcrumbLd([
+    { name: "Problems", url: href("/problems") },
+    { name: `${p.number}. ${p.title}`, url: pageUrl },
+  ]),
+];
 ---
-<BaseLayout title={`${p.number}. ${p.title}`} description={`C++ solution and notes for LeetCode ${p.number}. ${p.title} — pattern: ${p.patterns.join(", ")}.`}>
+<BaseLayout title={`${p.number}. ${p.title}`} description={pageDesc} type="article" jsonLd={jsonLd}>
   <nav class="text-sm muted mb-4">
     <a href={href("/problems")} class="hover:text-[var(--accent)]">Problems</a>
     <span class="mx-1">/</span>

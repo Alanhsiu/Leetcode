@@ -3,14 +3,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { href } from "../../lib/url";
 import { getReference } from "../../lib/content";
 import { renderMarkdown, demoteExtraH1 } from "../../lib/markdown";
+import { articleLd, breadcrumbLd } from "../../lib/seo";
 
 export async function getStaticPaths() {
   return getReference().map((r) => ({ params: { slug: r.slug }, props: { ref: r } }));
 }
 const { ref } = Astro.props;
 const html = demoteExtraH1(await renderMarkdown(ref.body));
+const refUrl = href(`/reference/${ref.slug}`);
+const refDesc = `C++ reference: ${ref.title}.`;
+const jsonLd = [
+  articleLd({ headline: ref.title, description: refDesc, url: refUrl, type: "TechArticle" }),
+  breadcrumbLd([
+    { name: "Reference", url: href("/reference") },
+    { name: ref.title, url: refUrl },
+  ]),
+];
 ---
-<BaseLayout title={ref.title} description={`C++ reference: ${ref.title}.`}>
+<BaseLayout title={ref.title} description={refDesc} type="article" jsonLd={jsonLd}>
   <nav class="text-sm muted mb-4">
     <a href={href("/reference")} class="hover:text-[var(--accent)]">Reference</a>
     <span class="mx-1">/</span><span class="font-mono">{ref.title}</span>

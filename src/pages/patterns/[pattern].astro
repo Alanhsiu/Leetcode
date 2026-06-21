@@ -4,6 +4,7 @@ import ProblemCard from "../../components/ProblemCard.astro";
 import { href } from "../../lib/url";
 import { PATTERNS, VISUALIZATIONS } from "../../lib/patterns";
 import { getProblemsByPattern } from "../../lib/content";
+import { breadcrumbLd } from "../../lib/seo";
 
 export function getStaticPaths() {
   return PATTERNS.map((p) => ({ params: { pattern: p.slug }, props: { pattern: p } }));
@@ -15,8 +16,12 @@ const vizMetas = pattern.vizIds
   .filter((v): v is NonNullable<typeof v> => Boolean(v));
 const byDiff = { Easy: 0, Medium: 0, Hard: 0, Unknown: 0 } as Record<string, number>;
 for (const p of problems) byDiff[p.difficulty]++;
+const jsonLd = breadcrumbLd([
+  { name: "Patterns", url: href("/patterns") },
+  { name: pattern.name, url: href(`/patterns/${pattern.slug}`) },
+]);
 ---
-<BaseLayout title={pattern.name} description={pattern.blurb} wide>
+<BaseLayout title={pattern.name} description={pattern.blurb} wide jsonLd={jsonLd}>
   <nav class="text-sm muted mb-4">
     <a href={href("/patterns")} class="hover:text-[var(--accent)]">Patterns</a>
     <span class="mx-1">/</span><span>{pattern.name}</span>

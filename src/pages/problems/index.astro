@@ -7,7 +7,7 @@ import { PATTERNS } from "../../lib/patterns";
 const problems = getProblems();
 const patterns = PATTERNS.filter((p) => problems.some((pr) => pr.patterns.includes(p.name)));
 ---
-<BaseLayout title="Problems" wide>
+<BaseLayout title="Problems" description="Browse every solved problem with difficulty, pattern, and status filters." wide>
   <header class="mb-6">
     <h1 class="text-3xl font-bold">Problems</h1>
     <p class="muted mt-1">{problems.length} C++ solutions — filter by pattern, difficulty, source, or your progress.</p>

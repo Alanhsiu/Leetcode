@@ -5,6 +5,7 @@ import { getStats } from "../lib/content";
 import { PATTERNS } from "../lib/patterns";
 import { getProblemsByPattern } from "../lib/content";
 import { getTrackViews } from "../lib/learning";
+import { websiteLd, SITE_DESCRIPTION } from "../lib/seo";
 
 const stats = getStats();
 const tracks = await getTrackViews();
@@ -13,7 +14,7 @@ const patternCards = PATTERNS.map((p) => ({
   count: getProblemsByPattern(p.name).length,
 }));
 ---
-<BaseLayout wide>
+<BaseLayout wide description={SITE_DESCRIPTION} jsonLd={websiteLd()}>
   <!-- Hero -->
   <section class="text-center py-10 sm:py-16">
     <p class="text-sm font-semibold uppercase tracking-widest" style="color: var(--accent);">Interview Prep</p>

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Generated social-card images aren't useful to index on their own.
+Disallow: /Leetcode/open-graph/
+
+Sitemap: https://alanhsiu.github.io/Leetcode/sitemap-index.xml

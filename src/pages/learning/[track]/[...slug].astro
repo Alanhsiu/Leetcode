@@ -8,6 +8,7 @@ import {
   getLearning, getTrackView, trackSlug, guideSlug, isLanding, guideProgressId,
 } from "../../../lib/learning";
 import { trackMeta, humanizeTrack } from "../../../data/tracks";
+import { articleLd, breadcrumbLd } from "../../../lib/seo";
 
 export async function getStaticPaths() {
   const all = await getLearning();
@@ -30,8 +31,18 @@ const next = idx >= 0 && idx < ordered.length - 1 ? ordered[idx + 1] : null;
 
 const { Content } = await render(entry);
 const progressId = guideProgressId(entry);
+const guideUrl = href(`/learning/${tmeta.slug}/${guideSlug(entry)}`);
+const guideDesc = entry.data.description || `${tmeta.title} — ${entry.data.title}`;
+const jsonLd = [
+  articleLd({ headline: entry.data.title, description: guideDesc, url: guideUrl, type: "TechArticle" }),
+  breadcrumbLd([
+    { name: "Learning", url: href("/learning") },
+    { name: tmeta.title, url: href(`/learning/${tmeta.slug}`) },
+    { name: entry.data.title, url: guideUrl },
+  ]),
+];
 ---
-<BaseLayout title={entry.data.title} description={entry.data.description || `${tmeta.title} — ${entry.data.title}`}>
+<BaseLayout title={entry.data.title} description={guideDesc} type="article" jsonLd={jsonLd}>
   <nav class="text-sm muted mb-4">
     <a href={href("/learning")} class="hover:text-[var(--accent)]">Learning</a>
     <span class="mx-1">/</span>

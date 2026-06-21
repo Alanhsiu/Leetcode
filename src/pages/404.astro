@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { href } from "../lib/url";
+
+const links = [
+  { label: "Problems", path: "/problems", desc: "Every solved problem, filterable." },
+  { label: "NeetCode 150", path: "/neetcode150", desc: "The 150 grid by pattern." },
+  { label: "Patterns", path: "/patterns", desc: "Core patterns + visualizations." },
+  { label: "Playground", path: "/playground", desc: "Run C++/Python/JS in the browser." },
+  { label: "Learning", path: "/learning", desc: "Temporal, Mender, GCP guides." },
+  { label: "Home", path: "/", desc: "Back to the start." },
+];
+---
+<BaseLayout title="Page not found" description="That page doesn't exist — head back to the notes." noindex>
+  <section class="text-center py-12 sm:py-20">
+    <p class="font-mono text-6xl sm:text-7xl font-extrabold" style="color: var(--accent);">404</p>
+    <h1 class="mt-4 text-2xl sm:text-3xl font-bold">This page wandered off.</h1>
+    <p class="mt-3 muted max-w-md mx-auto">
+      The page you're looking for doesn't exist or has moved. Try the search (press
+      <kbd class="border-token border rounded px-1 text-xs">/</kbd>) or pick a section below.
+    </p>
+    <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-left max-w-3xl mx-auto">
+      {links.map((l) => (
+        <a href={href(l.path)} class="card p-4 block">
+          <span class="font-semibold hover:text-[var(--accent)]">{l.label}</span>
+          <span class="muted text-sm block mt-1">{l.desc}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

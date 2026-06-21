@@ -5,19 +5,35 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SearchOverlay from "../components/SearchOverlay.astro";
 import { href } from "../lib/url";
+import { SITE_NAME, SITE_DESCRIPTION, absoluteUrl, ogImageUrl, ogKeyForPath } from "../lib/seo";
 
 interface Props {
   title?: string;
   description?: string;
   wide?: boolean;
+  /** og:type — "article" for problems/guides, "website" otherwise. */
+  type?: "website" | "article";
+  /** Override the auto-generated social image (absolute URL). */
+  image?: string;
+  /** structured data (JSON-LD); object or array, injected as <script type="application/ld+json">. */
+  jsonLd?: object | object[];
+  /** Set true to ask crawlers not to index this page (e.g. 404). */
+  noindex?: boolean;
 }
 const {
-  title = "DSA Interview Notes",
-  description = "A fast, visual, searchable collection of data-structures & algorithms interview notes, NeetCode 150 coverage, and interactive algorithm visualizations.",
+  title = SITE_NAME,
+  description = SITE_DESCRIPTION,
   wide = false,
+  type = "website",
+  image,
+  jsonLd,
+  noindex = false,
 } = Astro.props;
 
-const fullTitle = title === "DSA Interview Notes" ? title : `${title} · DSA Notes`;
+const fullTitle = title === SITE_NAME ? title : `${title} · DSA Notes`;
+const canonical = absoluteUrl(Astro.url.pathname);
+const ogImage = image ?? ogImageUrl(ogKeyForPath(Astro.url.pathname));
+const jsonLdList = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 <!doctype html>
 <html lang="en">
@@ -25,12 +41,46 @@ const fullTitle = title === "DSA Interview Notes" ? title : `${title} · DSA Not
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href={href("/favicon.svg")} type="image/svg+xml" />
+    <link rel="icon" type="image/png" sizes="32x32" href={href("/favicon-32x32.png")} />
+    <link rel="icon" type="image/png" sizes="16x16" href={href("/favicon-16x16.png")} />
+    <link rel="icon" href={href("/favicon.ico")} sizes="48x48" />
+    <link rel="apple-touch-icon" sizes="180x180" href={href("/apple-touch-icon.png")} />
+    <link rel="manifest" href={href("/site.webmanifest")} />
+    <link rel="mask-icon" href={href("/favicon.svg")} color="#6366f1" />
+    <meta name="theme-color" content="#0b0f17" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="sitemap" href={href("/sitemap-index.xml")} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${SITE_NAME} — guides & notes`}
+      href={absoluteUrl(href("/rss.xml"))}
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    {jsonLdList.map((obj) => (
+      <script type="application/ld+json" set:html={JSON.stringify(obj)} />
+    ))}
     <ThemeScript />
   </head>
   <body>

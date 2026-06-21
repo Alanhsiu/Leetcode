@@ -4,6 +4,7 @@ import CodeBlock from "../../components/CodeBlock.astro";
 import { href } from "../../lib/url";
 import { getCheatsheets } from "../../lib/content";
 import { renderMarkdown, demoteExtraH1 } from "../../lib/markdown";
+import { articleLd, breadcrumbLd } from "../../lib/seo";
 
 export async function getStaticPaths() {
   return getCheatsheets().map((c) => ({ params: { slug: c.slug }, props: { sheet: c } }));
@@ -14,8 +15,18 @@ const html = sheet.isCode ? "" : demoteExtraH1(await renderMarkdown(sheet.body))
 // page-level h1 when the content doesn't provide one (code sheets, or a file
 // that starts at a deeper heading) — avoids duplicate <h1> for accessibility.
 const contentHasH1 = !sheet.isCode && /^\s*#\s+\S/m.test(sheet.body.split("\n").find((l) => l.trim()) ?? "");
+const sheetUrl = href(`/cheatsheets/${sheet.slug}`);
+const sheetDesc = `Cheat sheet: ${sheet.title} (${sheet.group}).`;
+const jsonLd = [
+  articleLd({ headline: sheet.title, description: sheetDesc, url: sheetUrl, type: "TechArticle" }),
+  breadcrumbLd([
+    { name: "Cheat Sheets", url: href("/cheatsheets") },
+    { name: sheet.group, url: href("/cheatsheets") },
+    { name: sheet.title, url: sheetUrl },
+  ]),
+];
 ---
-<BaseLayout title={sheet.title} description={`Cheat sheet: ${sheet.title} (${sheet.group}).`}>
+<BaseLayout title={sheet.title} description={sheetDesc} type="article" jsonLd={jsonLd}>
   <nav class="text-sm muted mb-4">
     <a href={href("/cheatsheets")} class="hover:text-[var(--accent)]">Cheat Sheets</a>
     <span class="mx-1">/</span><span>{sheet.group}</span>

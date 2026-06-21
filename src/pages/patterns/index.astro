@@ -6,7 +6,7 @@ import { getProblemsByPattern } from "../../lib/content";
 
 const cards = PATTERNS.map((p) => ({ ...p, count: getProblemsByPattern(p.name).length }));
 ---
-<BaseLayout title="Patterns" wide>
+<BaseLayout title="Patterns" description="The core data-structure & algorithm patterns, each with a blurb and an interactive visualization." wide>
   <header class="mb-6">
     <h1 class="text-3xl font-bold">Patterns</h1>
     <p class="muted mt-1">The 18 NeetCode roadmap categories. Each bundles its problems and an interactive visualization.</p>

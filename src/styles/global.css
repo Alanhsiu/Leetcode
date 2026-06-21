@@ -25,7 +25,8 @@
   --border: #e2e8f0;
   --text: #0f172a;
   --text-muted: #64748b;
-  --accent: #6366f1;
+  /* indigo-600 — accent-as-text needs ≥4.5:1 on white; indigo-500 was 4.47. */
+  --accent: #4f46e5;
   /* Darker accent used wherever WHITE text sits on a filled accent surface
      (buttons, skip link, logo). #4f46e5 keeps ≥4.5:1 with #fff in both themes. */
   --accent-solid: #4f46e5;
@@ -61,7 +62,10 @@ html {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
+  /* Don't physically move cards on hover for motion-sensitive users. */
+  .card:hover { transform: none; }
 }
 
 body {
@@ -95,9 +99,11 @@ a { color: inherit; }
   padding: 0.25rem 0.5rem; border-radius: 9999px;
   border: 1px solid transparent; white-space: nowrap;
 }
-.badge-easy   { color: #16a34a; background: color-mix(in srgb, #22c55e 14%, transparent); border-color: color-mix(in srgb, #22c55e 35%, transparent); }
-.badge-medium { color: #d97706; background: color-mix(in srgb, #f59e0b 14%, transparent); border-color: color-mix(in srgb, #f59e0b 35%, transparent); }
-.badge-hard   { color: #dc2626; background: color-mix(in srgb, #ef4444 14%, transparent); border-color: color-mix(in srgb, #ef4444 35%, transparent); }
+/* Light-mode badge text is darkened (green-800/amber-deep/red-700) to clear
+   WCAG AA on the translucent tint; dark mode lightens them again below. */
+.badge-easy   { color: #166534; background: color-mix(in srgb, #22c55e 14%, transparent); border-color: color-mix(in srgb, #22c55e 35%, transparent); }
+.badge-medium { color: #a3540a; background: color-mix(in srgb, #f59e0b 14%, transparent); border-color: color-mix(in srgb, #f59e0b 35%, transparent); }
+.badge-hard   { color: #b91c1c; background: color-mix(in srgb, #ef4444 14%, transparent); border-color: color-mix(in srgb, #ef4444 35%, transparent); }
 .dark .badge-easy   { color: #4ade80; }
 .dark .badge-medium { color: #fbbf24; }
 .dark .badge-hard   { color: #f87171; }

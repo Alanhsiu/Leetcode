@@ -38,7 +38,7 @@ const stdinOpen = showStdin || stdin.trim().length > 0;
         class="viz-btn !text-xs"
         type="button"
         data-runner-run
-        style="background: var(--accent); color: #fff; border-color: var(--accent);"
+        style="background: var(--accent-solid); color: #fff; border-color: var(--accent-solid);"
       >▶ Run</button>
     </div>
   </div>
@@ -113,7 +113,8 @@ const stdinOpen = showStdin || stdin.trim().length > 0;
         const host = document.createElement("div");
         codeArea.style.display = "none";
         codeArea.insertAdjacentElement("afterend", host);
-        editor = createEditor({ parent: host, doc, language, dark: isDark(), onRun: run });
+        const label = codeArea.getAttribute("aria-label") ?? "Code editor";
+        editor = createEditor({ parent: host, doc, language, dark: isDark(), onRun: run, label });
       } catch {
         mounted = false; // keep the textarea fallback
       }

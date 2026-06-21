@@ -26,6 +26,9 @@
   --text: #0f172a;
   --text-muted: #64748b;
   --accent: #6366f1;
+  /* Darker accent used wherever WHITE text sits on a filled accent surface
+     (buttons, skip link, logo). #4f46e5 keeps ≥4.5:1 with #fff in both themes. */
+  --accent-solid: #4f46e5;
   --code-bg: #f6f8fa;
   --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06);
   color-scheme: light;
@@ -39,6 +42,7 @@
   --text: #e5e7eb;
   --text-muted: #94a3b8;
   --accent: #818cf8;
+  --accent-solid: #4f46e5;
   --code-bg: #0d1117;
   --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.4), 0 4px 12px 0 rgb(0 0 0 / 0.3);
   color-scheme: dark;
@@ -155,6 +159,14 @@ html.dark .astro-code, html.dark .astro-code span {
 }
 html.dark .astro-code { background-color: var(--code-bg) !important; }
 
+/* a11y: github-dark's comment/punctuation token (#6A737D) only reaches ~3.9:1 on
+   our darker code background — below WCAG AA. Shiki inlines the color, so we target
+   that exact token and lighten it to #8B949E (≥4.5:1) in dark mode only. */
+html.dark .shiki span[style*="6A737D"],
+html.dark .astro-code span[style*="6A737D"] {
+  color: #8b949e !important;
+}
+
 /* ---- Prose (rendered markdown) ---- */
 .prose { max-width: 72ch; line-height: 1.7; }
 .prose h1, .prose h2, .prose h3, .prose h4 { font-weight: 700; line-height: 1.25; scroll-margin-top: 5rem; }
@@ -198,6 +210,11 @@ html.dark .astro-code { background-color: var(--code-bg) !important; }
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+/* Reserve vertical space for a visualization before its JS mounts, so the
+   insert doesn't shift the page (cuts CLS). Applies only while the mount point
+   is still empty; once the viz renders, natural height takes over. */
+[data-viz-mount]:empty { min-height: 380px; display: block; }
 
 /* Visualization controls */
 .viz {
@@ -318,6 +335,6 @@ html.dark .astro-code { background-color: var(--code-bg) !important; }
 /* Skip link */
 .skip-link {
   position: absolute; left: -999px; top: 0; z-index: 100;
-  background: var(--accent); color: white; padding: 0.6rem 1rem; border-radius: 0 0 0.4rem 0;
+  background: var(--accent-solid); color: white; padding: 0.6rem 1rem; border-radius: 0 0 0.4rem 0;
 }
 .skip-link:focus { left: 0; }

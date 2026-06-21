@@ -29,7 +29,10 @@ const indexUrl = href("/search-index.json");
 </div>
 
 <script>
-  import Fuse from "fuse.js";
+  // Fuse.js (~29 KB) is the bulk of this bundle, but search is rarely the first
+  // interaction — so it's dynamically import()-ed the first time the overlay
+  // opens (in ensureIndex), keeping it out of every page's initial JS.
+  import type Fuse from "fuse.js";
 
   interface SearchDoc {
     kind: string;
@@ -55,9 +58,13 @@ const indexUrl = href("/search-index.json");
     if (loaded) return;
     loaded = true;
     try {
-      const res = await fetch(indexUrl);
+      // Load the search library and the index in parallel on first open.
+      const [{ default: FuseCtor }, res] = await Promise.all([
+        import("fuse.js"),
+        fetch(indexUrl),
+      ]);
       const data = (await res.json()) as SearchDoc[];
-      fuse = new Fuse(data, {
+      fuse = new FuseCtor(data, {
         keys: [
           { name: "title", weight: 3 },
           { name: "kind", weight: 0.5 },

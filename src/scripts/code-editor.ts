@@ -33,6 +33,8 @@ export function createEditor(opts: {
   language: EditorLanguage;
   dark: boolean;
   onRun?: () => void;
+  /** Accessible name for the editable region (a11y: ARIA textbox needs a name). */
+  label?: string;
 }): Editor {
   const theme = new Compartment();
   const baseTheme = EditorView.theme({
@@ -64,6 +66,7 @@ export function createEditor(opts: {
         EditorView.lineWrapping,
         baseTheme,
         runKey,
+        EditorView.contentAttributes.of({ "aria-label": opts.label ?? "Code editor" }),
         theme.of(opts.dark ? oneDark : []),
       ],
     }),

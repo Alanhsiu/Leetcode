@@ -151,25 +151,43 @@ async function main() {
 
   rl?.close();
 
-  // Resolve a non-colliding path: content/notes/<slug>.md (then -2, -3, …).
+  // Resolve a non-colliding path. Keep the clean English-title slug when it's free;
+  // if the file already exists (or the title produced an empty slug), append a short
+  // unique suffix so two notes never collide — looping in the (vanishing) chance the
+  // suffix also exists.
   mkdirSync(NOTES_DIR, { recursive: true });
   const base = slugify(title) || "note";
   let slug = base;
-  let n = 2;
-  while (existsSync(join(NOTES_DIR, `${slug}.md`))) slug = `${base}-${n++}`;
-  const file = join(NOTES_DIR, `${slug}.md`);
+  let file = join(NOTES_DIR, `${slug}.md`);
+  if (!slugify(title) || existsSync(file)) {
+    do {
+      slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+      file = join(NOTES_DIR, `${slug}.md`);
+    } while (existsSync(file));
+  }
   writeFileSync(file, content, "utf8");
 
   const rel = file.replace(ROOT + "/", "");
   console.log(`✓ Created ${rel}`);
 
-  // Open in $EDITOR (falls back to common editors); if none, just print the path.
-  const editor = process.env.EDITOR || process.env.VISUAL;
-  if (editor) {
-    spawnSync(editor, [file], { stdio: "inherit", shell: true });
-  } else {
-    console.log(`  Set $EDITOR to open it automatically. Then: npm run publish`);
+  openInEditor(file);
+}
+
+// Open the note in an editor WITHOUT a shell (avoids DEP0190 and the resulting
+// non-zero exit). Candidates, in order: $VISUAL, $EDITOR (each may carry args, e.g.
+// "code --wait"), then `code`, then `vi`. A missing command (ENOENT) falls through
+// to the next; if none is available we just print the path. The note is already
+// written, so we never fail the run because of the editor.
+function openInEditor(file) {
+  const candidates = [process.env.VISUAL, process.env.EDITOR, "code", "vi"].filter(Boolean);
+  for (const candidate of candidates) {
+    const [cmd, ...args] = candidate.trim().split(/\s+/);
+    if (!cmd) continue;
+    const res = spawnSync(cmd, [...args, file], { stdio: "inherit" });
+    if (res.error?.code === "ENOENT") continue; // not installed — try the next one
+    return; // launched (regardless of the editor's own exit code)
   }
+  console.log("  No editor found (set $EDITOR). Open it to edit, then: npm run publish");
 }
 
 main().catch((err) => {
